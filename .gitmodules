@@ -1,0 +1,3 @@
+[submodule "extern/Ipopt"]
+	path = extern/Ipopt
+	url = https://github.com/coin-or/Ipopt.git
