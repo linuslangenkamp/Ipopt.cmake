@@ -69,7 +69,7 @@ option(USE_PROCESSOR_EXTENSIONS      "Use sse / mmx / avx extensions during comp
 option(COIN_ENABLE_COMPAT            "Enable libc compatibility" OFF)   # Do not compile if ON
 
 # Set paths of source
-set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern/Ipopt)
+set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Ipopt/sources/)
 set(COIN_COVERAGE_CTEST_LABEL "SAMPLE" CACHE PATH "The label sent to ctest during coverage")
 
 mark_as_advanced(ENABLE_SHARED_LIBRARIES

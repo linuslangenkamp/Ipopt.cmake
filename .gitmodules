@@ -1,8 +1,11 @@
-[submodule "extern/Ipopt"]
-	path = extern/Ipopt
+[submodule "Ipopt"]
+	path = Ipopt/sources/
 	url = https://github.com/coin-or/Ipopt.git
 
 # TODO: re-add this once we know if we really need it
 #[submodule "BuildTools"]
 #	path = BuildTools
 #	url = https://github.com/coin-or-tools/BuildTools
+[submodule "Ipopt/sources"]
+	path = Ipopt/sources
+	url = https://github.com/coin-or/Ipopt.git

@@ -1,7 +1,8 @@
 # Building latest Ipopt 3.14.19 + MUMPS 5.8.1 with CMake
 
-Ipopt Submodule: [coin-or/Ipopt](https://github.com/coin-or/Ipopt.git)
-Forked from: [rjodon/coinor-ipopt-with-cmake](https://github.com/rjodon/coinor-ipopt-with-cmake.git)
+Coin-OR Ipopt repository: [coin-or/Ipopt](https://github.com/coin-or/Ipopt.git)
+
+This CMake version is forked from: [rjodon/coinor-ipopt-with-cmake](https://github.com/rjodon/coinor-ipopt-with-cmake.git)
 
 This repository is still work in progress. You are welcome to open pull requests with fixes / updates, thank you!
 
