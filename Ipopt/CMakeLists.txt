@@ -3,8 +3,6 @@
 
 get_ac_init_version(${Ipopt_DIR}/configure.ac IPOPT)
 
-message("current Ipopt dir: ${Ipopt_DIR}")
-
 set(IPOPT_VERSION_MAJOR   "${IPOPT_MAJOR_VERSION}"  CACHE STRING "The Ipopt major version number")
 set(IPOPT_VERSION_MINOR   "${IPOPT_MINOR_VERSION}"  CACHE STRING "The Ipopt minor version number")
 set(IPOPT_VERSION_RELEASE "${IPOPT_PATCH_VERSION}"  CACHE STRING "The Ipopt patch version number")
@@ -316,18 +314,16 @@ if (IPOPT_HAS_AMPL)
 endif ()
 
 if (ENABLE_SHARED_LIBRARIES)
-    add_library_mod(libipopt SHARED ${IPOPT_SRC_LIST})
+    add_library_mod(ipopt SHARED ${IPOPT_SRC_LIST})
 else ()
-    add_library_mod(libipopt STATIC ${IPOPT_SRC_LIST})
-    target_link_libraries(libipopt quadmath)
+    add_library_mod(ipopt STATIC ${IPOPT_SRC_LIST})
+    target_link_libraries(ipopt quadmath)
 endif ()
 if (COIN_COMPILE_LTO)
-    set_target_properties(libipopt PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
+    set_target_properties(ipopt PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
 endif ()
-if (NOT WIN32)
-    set_target_properties(libipopt PROPERTIES PREFIX "")
-endif ()
-set_include_directories(libipopt)
+
+set_include_directories(ipopt)
 
 if (IPOPT_HAS_AMPL)
     set (IPOPT_AMPL_SRC_LIST ${Ipopt_DIR}/src/Apps/AmplSolver/ampl_ipopt.cpp)
@@ -336,7 +332,6 @@ if (IPOPT_HAS_AMPL)
 
     add_executable_mod(ipopt ${IPOPT_AMPL_SRC_LIST})
 
-    target_link_libraries(ipopt libipopt)
     if (COIN_HAS_MUMPS)
         target_link_libraries(ipopt dmumps mumps_common seq pthread)
     endif ()
@@ -429,7 +424,7 @@ if (IPOPT_BUILD_EXAMPLES)
             ${Ipopt_DIR}/examples/ScalableProblems/solve_problem.cpp)
 
     add_executable_mod(solve_problem ${ScalableProblems_SRCS})
-    target_link_libraries(solve_problem libipopt)
+    target_link_libraries(solve_problem ipopt)
     if (COIN_COMPILE_LTO)
         set_target_properties(solve_problem PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
     endif ()
@@ -672,7 +667,7 @@ if (IPOPT_BUILD_EXAMPLES)
             ${Ipopt_DIR}/examples/Cpp_example/MyNLP.cpp)
 
     add_executable_mod(cpp_example ${Cpp_example_SRCS})
-    target_link_libraries(cpp_example libipopt)
+    target_link_libraries(cpp_example ipopt)
     if (COIN_COMPILE_LTO)
         set_target_properties(cpp_example PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
     endif ()
@@ -722,7 +717,7 @@ if (IPOPT_BUILD_EXAMPLES)
     set(hs071_c_SRCS ${Ipopt_DIR}/examples/hs071_c/hs071_c.c)
 
     add_executable_mod(hs071_c ${hs071_c_SRCS})
-    target_link_libraries(hs071_c libipopt)
+    target_link_libraries(hs071_c ipopt)
     if (COIN_COMPILE_LTO)
         set_target_properties(hs071_c PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
     endif ()
@@ -773,7 +768,7 @@ if (IPOPT_BUILD_EXAMPLES)
             ${Ipopt_DIR}/examples/hs071_cpp/hs071_nlp.cpp)
 
     add_executable_mod(hs071_cpp ${hs071_cpp_SRCS})
-    target_link_libraries(hs071_cpp libipopt)
+    target_link_libraries(hs071_cpp ipopt)
     if (COIN_COMPILE_LTO)
         set_target_properties(hs071_cpp PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
     endif ()
@@ -965,7 +960,7 @@ set(ALL_HDRS ${LINALG_HDRS}
 install(FILES ${ALL_HDRS}
         DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/coin)
 
-install(TARGETS libipopt
+install(TARGETS ipopt
         RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/static)

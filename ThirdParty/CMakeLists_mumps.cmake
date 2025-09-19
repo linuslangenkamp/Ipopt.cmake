@@ -102,6 +102,13 @@ endif ()
 
 # if MPI found, then do not compile libseq ...
 
+if (IPOPT_INT64)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/mumps_int_def64_h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/mumps_int_def.h)
+else ()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/mumps_int_def32_h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/mumps_int_def.h)
+endif ()
+
+include_directories(${CMAKE_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
@@ -629,18 +636,29 @@ set(MUMPS_Z_SRCS src/mumps_c.c
                 src/zstatic_ptr_m.F
                 src/ztools.F
                 src/ztype3_root.F)
-if (WIN32)
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /fpp /nologo /reentrancy /fixed /warn:noalignments /Qsave /Qzero /libs:static /threads /traceback /D_CRT_SECURE_NO_WARNINGS /DALLOW_NON_INIT /Dintel_ ")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /nologo /D_CRT_SECURE_NO_WARNINGS /DAdd_ ")
-else ()
+
+#if (WIN32)
+  #set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /fpp /nologo /reentrancy /fixed /warn:noalignments /Qsave /Qzero /libs:static /threads /traceback /D_CRT_SECURE_NO_WARNINGS /DALLOW_NON_INIT /Dintel_ ")
+  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /nologo /D_CRT_SECURE_NO_WARNINGS /DAdd_ ")
+#else ()
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -w -fcray-pointer -fallow-argument-mismatch -fall-intrinsics -finit-local-zero -DALLOW_NON_INIT -Dintel_ ")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -DAdd_ ")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -DAdd_")
+#endif ()
+
+if (BLAS_FOUND)
+    set(LINK_LIBS ${LINK_LIBS}
+                    blas)
+endif ()
+
+if (LAPACK_FOUND)
+    set(LINK_LIBS ${LINK_LIBS}
+                    lapack)
 endif ()
 
 if (WIN32)
   if (MUMPS_USE_LIBSEQ)
     set(LINK_LIBS ${LINK_LIBS}
-                  libseq)
+                  seq)
   else ()
     set(LINK_LIBS ${LINK_LIBS}
                   ${MPI_LIB_NAME})
@@ -660,20 +678,10 @@ else ()
 
   if (MUMPS_USE_LIBSEQ)
     set(LINK_LIBS ${LINK_LIBS}
-                  libseq)
+                  seq)
   else ()
     set(LINK_LIBS ${LINK_LIBS}
                   ${MPI_LIB_NAME})
-  endif ()
-
-  if (BLAS_FOUND)
-    set(LINK_LIBS ${LINK_LIBS}
-                  blas)
-  endif ()
-
-  if (LAPACK_FOUND)
-    set(LINK_LIBS ${LINK_LIBS}
-                  lapack)
   endif ()
 
   if (MUMPS_USE_F2C)
@@ -691,61 +699,40 @@ if (MUMPS_USE_METIS)
 endif ()
 
 if (MUMPS_USE_LIBSEQ)
-  add_library(libseq STATIC ${MUMPS_LIBSEQ_SRCS})
-  if (NOT WIN32)
-    set_target_properties(libseq PROPERTIES PREFIX "")
-  endif ()
+  add_library(seq STATIC ${MUMPS_LIBSEQ_SRCS})
 endif ()
 
-add_library(libpord STATIC ${MUMPS_PORD_SRCS})
-target_include_directories(libpord BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/PORD/include)
-if (NOT WIN32)
-  set_target_properties(libpord PROPERTIES PREFIX "")
-endif ()
+add_library(pord STATIC ${MUMPS_PORD_SRCS})
+target_include_directories(pord BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/PORD/include)
 
-add_library(libmumps_common STATIC ${MUMPS_COMMON_SRCS})
-if (NOT WIN32)
-  set_target_properties(libmumps_common PROPERTIES PREFIX "")
-endif ()
+add_library(mumps_common STATIC ${MUMPS_COMMON_SRCS})
 
 # TODO: add MUMPS single precision
 
-# add_library(libsmumps STATIC ${MUMPS_S_SRCS})
-# if (NOT WIN32)
-#   set_target_properties(libsmumps PROPERTIES PREFIX "")
-# endif ()
-# target_link_libraries(libsmumps libmumps_common)
+# add_library(smumps STATIC ${MUMPS_S_SRCS})
+# target_link_libraries(smumps mumps_common)
 #
 
-add_library(libdmumps STATIC ${MUMPS_D_SRCS})
-if (NOT WIN32)
-  set_target_properties(libdmumps PROPERTIES PREFIX "")
-endif ()
-target_link_libraries(libdmumps libmumps_common)
+add_library(dmumps STATIC ${MUMPS_D_SRCS})
+target_link_libraries(dmumps mumps_common)
 
-# add_library(libcmumps STATIC ${MUMPS_C_SRCS})
-# if (NOT WIN32)
-#   set_target_properties(libcmumps PROPERTIES PREFIX "")
-# endif ()
-# target_link_libraries(libcmumps libmumps_common)
+# add_library(cmumps STATIC ${MUMPS_C_SRCS})
+# target_link_libraries(cmumps mumps_common)
 
-# add_library(libzmumps STATIC ${MUMPS_Z_SRCS})
-# if (NOT WIN32)
-#   set_target_properties(libzmumps PROPERTIES PREFIX "")
-# endif ()
-# target_link_libraries(libzmumps libmumps_common)
+# add_library(zmumps STATIC ${MUMPS_Z_SRCS})
+# target_link_libraries(zmumps mumps_common)
 
-if (WIN32)
-  #set_property(TARGET libsmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_s")
-  set_property(TARGET libdmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_d")
-  #set_property(TARGET libcmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_c")
-  #set_property(TARGET libzmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_z")
-else ()
+#if (WIN32)
+#  #set_property(TARGET libsmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_s")
+#  set_property(TARGET libdmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_d")
+#  #set_property(TARGET libcmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_c")
+#  #set_property(TARGET libzmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_z")
+#else ()
   #set_property(TARGET libsmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_s")
-  set_property(TARGET libdmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_d")
+  set_property(TARGET dmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_d")
   #set_property(TARGET libcmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_c")
   #set_property(TARGET libzmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_z")
-endif ()
+#endif ()
 
 # To allow the link of examples on the cluster
 if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
@@ -754,11 +741,11 @@ if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
 endif ()
 
 add_executable(dsimple_test examples/dsimpletest.F)
-target_link_libraries(dsimple_test libdmumps libmumps_common libpord ${LINK_LIBS})
+target_link_libraries(dsimple_test dmumps mumps_common pord ${LINK_LIBS})
 set_target_properties(dsimple_test PROPERTIES LINKER_LANGUAGE Fortran)
 
 add_executable(c_example examples/c_example.c)
-target_link_libraries(c_example libdmumps libmumps_common libpord ${LINK_LIBS})
+target_link_libraries(c_example dmumps mumps_common pord ${LINK_LIBS})
 if (WIN32)
   # Under windows, this line is required to allow compilation of the MUMPS C example.
   # Under Linux, this line makes the link phase hangs because of multiply defined main symbol
@@ -767,26 +754,26 @@ endif ()
 
 # Install rules
 if (MUMPS_USE_LIBSEQ)
-  install(TARGETS libseq
+  install(TARGETS seq
           DESTINATION ${LIBDIR})
 endif ()
 
-install(TARGETS libpord
+install(TARGETS pord
         DESTINATION ${LIBDIR})
 
-install(TARGETS libmumps_common
+install(TARGETS mumps_common
         DESTINATION ${LIBDIR})
 
-# install(TARGETS libcmumps
+# install(TARGETS cmumps
 #         DESTINATION ${LIBDIR})
 
-install(TARGETS libdmumps
+install(TARGETS dmumps
         DESTINATION ${LIBDIR})
 
-# install(TARGETS libsmumps
+# install(TARGETS smumps
 #         DESTINATION ${LIBDIR})
 # 
-# install(TARGETS libzmumps
+# install(TARGETS zmumps
 #         DESTINATION ${LIBDIR})
 
 if (MUMPS_USE_LIBSEQ)

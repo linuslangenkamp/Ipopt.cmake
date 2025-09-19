@@ -607,8 +607,9 @@ if (WIN32)
 endif ()
 
 if (COIN_USE_FAST_CODE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fomit-frame-pointer ")
-    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -O3 -fomit-frame-pointer ")
+    set(CMAKE_CXX_FLAGS       "${CMAKE_CXX_FLAGS} -O3 -fomit-frame-pointer ")
+    set(CMAKE_C_FLAGS         "${CMAKE_C_FLAGS} -O3 -fomit-frame-pointer ")
+    set(CMAKE_Fortran_FLAGS   "${CMAKE_Fortran_FLAGS} -O3 ")
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-math-errno -fp-trap=none ")

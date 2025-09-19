@@ -39,15 +39,15 @@ endif ()
 
 set(CMAKE_GENERATOR_OLD    "${CMAKE_GENERATOR}")
 set(CMAKE_MAKE_PROGRAM_OLD "${CMAKE_MAKE_PROGRAM}")
-if (WIN32)
-    set(CMAKE_GENERATOR    "NMake Makefiles")
-    set(CMAKE_MAKE_PROGRAM "nmake.exe")
-    set(CMAKE_OPT          "")
-else ()
-    set(CMAKE_GENERATOR    "Unix Makefiles")
-    set(CMAKE_MAKE_PROGRAM "make")
-    set(CMAKE_OPT          "-j 16")
-endif ()
+#if (WIN32)
+#    set(CMAKE_GENERATOR    "MSYS Makefiles")
+#    set(CMAKE_MAKE_PROGRAM "make")
+#    set(CMAKE_OPT          "-j 16")
+#else ()
+#    set(CMAKE_GENERATOR    "Unix Makefiles")
+#    set(CMAKE_MAKE_PROGRAM "make")
+#    set(CMAKE_OPT          "-j 16")
+#endif ()
 
 if (NOT COIN_ENABLE_DOWNLOAD_MINGW_LAPACK AND
         NOT COIN_ENABLE_DOWNLOAD_LAPACK AND
@@ -283,6 +283,10 @@ endif ()
 # ===> Mumps compilation
 # #################################################
 
+# TODO: Modern CMake (≥ 3.12 - 3.15) encourages FetchContent combined with add_subdirectory so dependencies
+#       become real CMake targets, with proper include directories and link information.
+#    => refactor this
+
 if (COIN_ENABLE_DOWNLOAD_MUMPS)
     set(MUMPS_VERSION "5.8.1")
     set(COIN_HAS_MUMPS  ON CACHE BOOL "Clp uses the MUMPS linear solver" FORCE)
@@ -305,7 +309,7 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
         set(MUMPS_DEPENDS ${MUMPS_DEPENDS} ext-Metis)
     endif ()
 
-    set(MUMPS_URL        "http:////mumps-solver.org/MUMPS_${MUMPS_VERSION}.tar.gz" CACHE FILEPATH "Path to MUMPS_${MUMPS_VERSION}.tar.gz source archive")
+    set(MUMPS_URL "https://mumps-solver.org/MUMPS_${MUMPS_VERSION}.tar.gz" CACHE STRING "URL to MUMPS_${MUMPS_VERSION}.tar.gz source archive")
     set(MUMPS_InstallDir "${ext-InstallDir}/Mumps-${MUMPS_VERSION}/${CMAKE_CFG_INTDIR}/")
 
     if (COIN_USE_SYSTEM_LAPACK)
