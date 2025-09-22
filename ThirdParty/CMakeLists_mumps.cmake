@@ -135,9 +135,9 @@ if (MUMPS_USE_METIS)
   add_definitions(-Dmetis)
 endif ()
 
-# if (NOT MUMPS_METIS_INC_PATH STREQUAL "None")
-#  include_directories(${MUMPS_METIS_INC_PATH})
-# endif ()
+if (NOT MUMPS_METIS_INC_PATH STREQUAL "None")
+ include_directories(${MUMPS_METIS_INC_PATH})
+endif ()
 
 if (NOT MUMPS_METIS_LIB_PATH STREQUAL "None")
   link_directories(${MUMPS_METIS_LIB_PATH})
