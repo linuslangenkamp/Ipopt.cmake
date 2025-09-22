@@ -294,13 +294,8 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
 
     set(MUMPS_DEPENDS "")
 
-    if (COIN_ENABLE_DOWNLOAD_METIS)
-        set(MUMPS_METIS_INC_PATH "${ext-InstallDir}/include/metis" CACHE PATH "The METIS library include Path" FORCE)
-        set(MUMPS_METIS_LIB_PATH "${ext-InstallDir}/lib"           CACHE PATH "The METIS library library Path" FORCE)
-    else ()
-        set(MUMPS_METIS_INC_PATH "None" CACHE PATH "The METIS library include Path" FORCE)
-        set(MUMPS_METIS_LIB_PATH "None" CACHE PATH "The METIS library library Path" FORCE)
-    endif ()
+    include(FindCheckMetis.cmake)
+    find_or_check_metis(MUMPS_USE_METIS)
 
     if (COIN_ENABLE_DOWNLOAD_CLAPACK OR COIN_ENABLE_DOWNLOAD_LAPACK)
         set(MUMPS_DEPENDS ${MUMPS_DEPENDS} ext-Lapack)
@@ -328,10 +323,12 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
             #		                     && ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps ${PATCH_EXECUTABLE} -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/mumps_mpi.patch
             #		                     && ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps ${PATCH_EXECUTABLE} -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/mumps.patch
             CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${MUMPS_InstallDir}/src/ext-Mumps/build
-            && ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps/build ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${ext-InstallDir} -DMUMPS_USE_LIBSEQ=ON -DMUMPS_USE_METIS=${COIN_ENABLE_DOWNLOAD_METIS} -DMUMPS_LAPACK_LIB_PATH:Path=${MUMPS_LAPACK_PATH} -DMUMPS_METIS_INC_PATH:Path=${MUMPS_METIS_INC_PATH} -DMUMPS_METIS_LIB_PATH:Path=${MUMPS_METIS_LIB_PATH} -DMUMPS_INSTALL_COIN=ON -DMUMPS_USE_F2C=${COIN_ENABLE_DOWNLOAD_CLAPACK} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -G ${CMAKE_GENERATOR} ..
+            && ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps/build ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${ext-InstallDir} -DMUMPS_USE_LIBSEQ=ON -DMUMPS_USE_METIS=${MUMPS_USE_METIS} -DMUMPS_LAPACK_LIB_PATH:Path=${MUMPS_LAPACK_PATH} -DMUMPS_METIS_LIB_PATH:Path=${MUMPS_METIS_LIB_PATH} -DMUMPS_INSTALL_COIN=ON -DMUMPS_USE_F2C=${COIN_ENABLE_DOWNLOAD_CLAPACK} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -G ${CMAKE_GENERATOR} ..
             BUILD_COMMAND     ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps/build ${CMAKE_MAKE_PROGRAM} -j 16
             INSTALL_COMMAND   ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps/build ${CMAKE_MAKE_PROGRAM} install
             )
+
+            # removed: -DMUMPS_METIS_INC_PATH:Path=${MUMPS_METIS_INC_PATH} 
 endif ()
 # #################################################
 # <=== Mumps compilation

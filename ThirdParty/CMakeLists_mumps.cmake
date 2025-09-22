@@ -5,15 +5,14 @@ cmake_minimum_required (VERSION 3.10)
 
 project (MUMPS C CXX Fortran)
 
-option(MUMPS_USE_LIBSEQ   "Use the MUMPS sequential MPI stub" ON)
-option(MUMPS_USE_METIS    "Use the Metis library"             ON)
-option(MUMPS_USE_F2C      "F2c was used to compiled CLapack"  OFF)
-option(MUMPS_INSTALL_COIN "Install MUMPS for CoinOR"          ON)
+# set(MUMPS_METIS_INC_PATH "None" CACHE PATH "The METIS library include Path")
 
-set(MUMPS_METIS_INC_PATH "None" CACHE PATH "The METIS library include Path")
 set(MUMPS_METIS_LIB_PATH "None" CACHE PATH "The METIS library library Path")
 
 set(MUMPS_LAPACK_LIB_PATH "None" CACHE PATH "The Lapack library library Path")
+
+message(STATUS "Building MUMPS with METIS: ${MUMPS_USE_METIS}")
+message(STATUS "METIS library path: ${MUMPS_METIS_LIB_PATH}")
 
 set(INCLUDEDIR ${CMAKE_SOURCE_DIR}/../../../include)
 
@@ -136,12 +135,14 @@ if (MUMPS_USE_METIS)
   add_definitions(-Dmetis)
 endif ()
 
-if (NOT MUMPS_METIS_INC_PATH STREQUAL "None")
-  include_directories(${MUMPS_METIS_INC_PATH})
-endif ()
+# if (NOT MUMPS_METIS_INC_PATH STREQUAL "None")
+#  include_directories(${MUMPS_METIS_INC_PATH})
+# endif ()
+
 if (NOT MUMPS_METIS_LIB_PATH STREQUAL "None")
   link_directories(${MUMPS_METIS_LIB_PATH})
 endif ()
+
 if (NOT MUMPS_LAPACK_LIB_PATH STREQUAL "None")
   link_directories(${MUMPS_LAPACK_LIB_PATH})
 endif ()
@@ -641,8 +642,8 @@ set(MUMPS_Z_SRCS src/mumps_c.c
   #set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /fpp /nologo /reentrancy /fixed /warn:noalignments /Qsave /Qzero /libs:static /threads /traceback /D_CRT_SECURE_NO_WARNINGS /DALLOW_NON_INIT /Dintel_ ")
   #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /nologo /D_CRT_SECURE_NO_WARNINGS /DAdd_ ")
 #else ()
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -w -fcray-pointer -fallow-argument-mismatch -fall-intrinsics -finit-local-zero -DALLOW_NON_INIT -Dintel_ ")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -DAdd_")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -w -fcray-pointer -fallow-argument-mismatch -fall-intrinsics -finit-local-zero -DALLOW_NON_INIT -Dintel_ ")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -DAdd_")
 #endif ()
 
 if (BLAS_FOUND)
@@ -702,8 +703,10 @@ if (MUMPS_USE_LIBSEQ)
   add_library(seq STATIC ${MUMPS_LIBSEQ_SRCS})
 endif ()
 
-add_library(pord STATIC ${MUMPS_PORD_SRCS})
-target_include_directories(pord BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/PORD/include)
+if (NOT MUMPS_USE_LIBSEQ)
+  add_library(pord STATIC ${MUMPS_PORD_SRCS})
+  target_include_directories(pord BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/PORD/include)
+endif ()
 
 add_library(mumps_common STATIC ${MUMPS_COMMON_SRCS})
 
@@ -741,11 +744,11 @@ if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
 endif ()
 
 add_executable(dsimple_test examples/dsimpletest.F)
-target_link_libraries(dsimple_test dmumps mumps_common pord ${LINK_LIBS})
+target_link_libraries(dsimple_test dmumps mumps_common ${LINK_LIBS})
 set_target_properties(dsimple_test PROPERTIES LINKER_LANGUAGE Fortran)
 
 add_executable(c_example examples/c_example.c)
-target_link_libraries(c_example dmumps mumps_common pord ${LINK_LIBS})
+target_link_libraries(c_example dmumps mumps_common ${LINK_LIBS})
 if (WIN32)
   # Under windows, this line is required to allow compilation of the MUMPS C example.
   # Under Linux, this line makes the link phase hangs because of multiply defined main symbol
@@ -758,8 +761,10 @@ if (MUMPS_USE_LIBSEQ)
           DESTINATION ${LIBDIR})
 endif ()
 
+if (NOT MUMPS_USE_LIBSEQ)
 install(TARGETS pord
         DESTINATION ${LIBDIR})
+endif ()
 
 install(TARGETS mumps_common
         DESTINATION ${LIBDIR})

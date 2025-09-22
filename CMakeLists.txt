@@ -68,6 +68,12 @@ endif ()
 option(USE_PROCESSOR_EXTENSIONS      "Use sse / mmx / avx extensions during compilation" OFF)
 option(COIN_ENABLE_COMPAT            "Enable libc compatibility" OFF)   # Do not compile if ON
 
+# MUMPS build options
+option(MUMPS_USE_LIBSEQ   "Use the MUMPS sequential MPI stub" ON)
+option(MUMPS_USE_METIS    "Use the Metis library"             ON)
+option(MUMPS_USE_F2C      "F2c was used to compiled CLapack"  OFF)
+option(MUMPS_INSTALL_COIN "Install MUMPS for CoinOR"          ON)
+
 # Set paths of source
 set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Ipopt/sources/)
 set(COIN_COVERAGE_CTEST_LABEL "SAMPLE" CACHE PATH "The label sent to ctest during coverage")

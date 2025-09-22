@@ -352,7 +352,7 @@ if (COIN_ENABLE_DOWNLOAD_ASL)
     target_link_libraries(ipopt amplsolver)
 endif ()
 
-if (COIN_ENABLE_DOWNLOAD_METIS)
+if (MUMPS_USE_METIS)
     target_link_libraries(ipopt metis)
 endif ()
 
