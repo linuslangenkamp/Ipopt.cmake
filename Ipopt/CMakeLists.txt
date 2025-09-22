@@ -38,6 +38,11 @@ add_definitions(-DIPOPTLIB_BUILD)
 # add_definitions(-DIPOPT_BUILD -DIPOPTLIB_BUILD -DIPOPT_HAS_LAPACK)
 # add_definitions(-DIPOPT_BUILD -DCOIN_USE_MUMPS_MPI_H -DIPOPT_HAS_STD__RAND -DIPOPT_HAS_LAPACK)
 
+message(STATUS "Fortran name mangling:")
+message(STATUS "F77_FUNC = ${F77_FUNC}")
+message(STATUS "F77_FUNC_ = ${F77_FUNC_}")
+message(STATUS "COIN_LAPACK_FUNC = ${COIN_LAPACK_FUNC}")
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in       ${CMAKE_BINARY_DIR}/Ipopt/include/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config_ipopt.h.in ${CMAKE_BINARY_DIR}/Ipopt/include/config_ipopt.h)
 

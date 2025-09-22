@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 cmake_policy(SET CMP0075 NEW)
 project(Ipopt)
 
@@ -120,10 +120,6 @@ if (IPOPT_ENABLE_INEXACT AND NOT (IPOPT_HAS_PARDISO OR IPOPT_HAS_PARDISO_MKL OR 
     message(FATAL_ERROR "Error: Inexact solver is only available through MKL. Please activate the MKL")
 endif ()
 
-if (NOT IPOPT_ENABLE_INEXACT)
-    message(WARNING "If you have MKL, you can activate IPOPT_ENABLE_INEXACT")
-endif ()
-
 #------------------------------------------------------------
 # Detect 64 bits
 #------------------------------------------------------------
@@ -154,11 +150,9 @@ endif ()
 
 include(CheckCCompilerFlag)
 if (COIN_COMPILE_LTO)
-    if (NOT CMAKE_VERSION VERSION_LESS "3.9")
-        cmake_policy(SET CMP0069 NEW)
-        include(CheckIPOSupported)
-        check_ipo_supported()
-    endif ()
+    cmake_policy(SET CMP0069 NEW)
+    include(CheckIPOSupported)
+    check_ipo_supported()
 endif ()
 
 if (COIN_ENABLE_COMPAT)
@@ -248,186 +242,13 @@ coin_check_and_add_include_path(COIN_HAS_WSMP_INCLUDE_PATH)
 coin_check_and_add_library_path(COIN_HAS_WSMP_LIBRARY_PATH)
 
 #-----------------------------------------------------------------------------
-# Manage compilation options
+# Dependencies
 #-----------------------------------------------------------------------------
 
-if (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
-    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wno-deprecated")
-
-    if (NOT ENABLE_SHARED_LIBRARIES)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-        set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fPIC")
-    endif ()
-    if (COIN_COMPILE_WARNINGS)
-        # Try to locate unitizalized variables
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wshadow -Wuninitialized ")
-        set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wall -Wshadow -Wmissing-prototypes -Wuninitialized ")
-    endif ()
-    if (COIN_COMPILE_STATIC)
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT APPLE)
-            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
-
-            check_c_linker_flag("-z muldef" ZFLAGDEFINED)
-            if (ZFLAGDEFINED)
-                set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z muldefs")
-            endif ()
-        endif ()
-    endif ()
-    if (COIN_COMPILE_COVERAGE)
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O0 --coverage")
-            set(CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -O0 --coverage")
-            set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -O0 --coverage")
-        endif ()
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version='408*'")
-        endif ()
-    endif ()
-    if (COIN_COMPILE_PROFILE)
-        set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -pg")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
-    endif ()
-    if (COIN_COMPILE_PROFILE_VALGRIND)
-        set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -p")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -p")
-    else ()
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT APPLE)
-            check_c_linker_flag("-z muldef" ZFLAGDEFINED)
-            if (ZFLAGDEFINED)
-                set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z muldefs")
-            endif ()
-        endif ()
-    endif ()
+if (COIN_USE_SYSTEM_LAPACK)
+    find_package(LAPACK REQUIRED)
 endif ()
 
-#-----------------------------------------------------------------------------
-# Manage specific VS flags
-#-----------------------------------------------------------------------------
-
-if (MSVC)
-    # Avoid Warning C4530 by using the flag /EHsc
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc ")
-    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} /EHsc ")
-endif ()
-
-#-----------------------------------------------------------------------------
-# Manage threads include dir under Windows
-#-----------------------------------------------------------------------------
-
-if (WIN32)
-    if (NOT COIN_THREADS_INC_PATH STREQUAL "None")
-        include_directories(${COIN_THREADS_INC_PATH})
-    endif ()
-    if (NOT COIN_THREADS_LIB_PATH STREQUAL "None")
-        link_directories(${COIN_THREADS_LIB_PATH})
-    endif ()
-endif ()
-
-# Check for a fortran compiler
-include(CMakeDetermineFortranCompiler)
-if (NOT CMAKE_Fortran_COMPILER)
-    message(STATUS "WARNING: fortran compiler not found. Disabling f77/f95 bindings")
-endif ()
-
-# Define FORTRAN_INTEGER_TYPE for Ipopt.
-set(FORTRAN_INTEGER_TYPE int)
-
-#-----------------------------------------------------------------------------
-# Detect name mangling convention used between Fortran and C
-#-----------------------------------------------------------------------------
-
-if (CMAKE_Fortran_COMPILER)
-    enable_language(Fortran)
-
-    include(FortranCInterface)
-
-    FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/F77Mangle.h
-            MACRO_NAMESPACE "F77_"
-            SYMBOL_NAMESPACE "F77_")
-
-    file(STRINGS ${CMAKE_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL\\(.*,.*\\) +(.*)")
-    string(REGEX MATCH "F77_GLOBAL\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
-    set(F77_FUNC         "F77_FUNC(name,NAME) ${CMAKE_MATCH_1}")
-    set(COIN_LAPACK_FUNC "COIN_LAPACK_FUNC(name,NAME) ${CMAKE_MATCH_1}")
-
-    file(STRINGS ${CMAKE_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL_\\(.*,.*\\) +(.*)")
-    string(REGEX MATCH "F77_GLOBAL_\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
-    set(F77_FUNC_         "F77_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
-    set(COIN_LAPACK_FUNC_ "COIN_LAPACK_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
-else ()
-    set(F77_FUNC          "F77_FUNC(name,NAME)  name##_")
-    set(F77_FUNC_         "F77_FUNC_(name,NAME) name##__")
-    set(COIN_LAPACK_FUNC  "COIN_LAPACK_FUNC(name,NAME)  name##_")
-    set(COIN_LAPACK_FUNC_ "COIN_LAPACK_FUNC_(name,NAME) name##__")
-endif ()
-
-set(F77_DUMMY_MAIN "" CACHE STRING "Define to dummy 'main' function (if any) required to link to the Fortran libraries.")
-set(FC_DUMMY_MAIN  "" CACHE STRING "Define to dummy 'main' function (if any) required to link to the Fortran libraries.")
-option(FC_DUMMY_MAIN_EQ_F77 "Define if F77 and FC dummy 'main' functions are identical." OFF)
-
-if (FC_DUMMY_MAIN_EQ_F77)
-    set(FC_DUMMY_MAIN "${F77_DUMMY_MAIN}")
-endif ()
-
-mark_as_advanced(F77_FUNC
-        F77_FUNC_
-        F77_DUMMY_MAIN
-        FC_DUMMY_MAIN
-        FC_DUMMY_MAIN_EQ_F77)
-
-# Manage coverage via lcov automatically
-
-if (COIN_COMPILE_COVERAGE AND NOT ((CMAKE_BUILD_TYPE STREQUAL "DEBUG") OR (CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")))
-    message(STATUS "Warning: to enable coverage, you must compile in DEBUG ou RELWITHDEBINFO mode")
-endif ()
-
-if (COIN_COMPILE_COVERAGE)
-    if (WIN32)
-        message(FATAL_ERROR "Error: code coverage analysis is only available under Linux for now.")
-    endif ()
-
-    find_program(GCOV_PATH gcov)
-    find_program(LCOV_PATH lcov)
-    find_program(GENHTML_PATH genhtml)
-
-    if (NOT GCOV_PATH)
-        message(FATAL_ERROR "gcov not found! Please install lcov and gcov. Aborting...")
-    endif ()
-
-    if (NOT LCOV_PATH)
-        message(FATAL_ERROR "lcov not found! Please install lcov and gcov. Aborting...")
-    endif ()
-
-    if (NOT GENHTML_PATH)
-        message(FATAL_ERROR "genhtml not found! Please install lcov and gcov. Aborting...")
-    endif ()
-
-    # /!\ FAILURE IF AT LEAST ONE TEST FAILS
-    # Capturing lcov counters and generating report
-    add_custom_target(coverage
-            COMMAND ${LCOV_PATH} --directory ${CMAKE_BINARY_DIR} --zerocounters
-            COMMAND ${LCOV_PATH} --capture --initial --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
-            COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_BINARY_DIR} ${CMAKE_CTEST_COMMAND} -LE "(LONG|FAIL)" -L "${COIN_COVERAGE_CTEST_LABEL}" || true
-            COMMAND ${LCOV_PATH} --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
-            COMMAND ${LCOV_PATH} --remove ${CMAKE_BINARY_DIR}/coverage.info "*/usr/include/*" '${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/*' --output-file ${CMAKE_BINARY_DIR}/coverage.info.cleaned
-            COMMAND ${GENHTML_PATH} -o ${CMAKE_BINARY_DIR}/coverage ${CMAKE_BINARY_DIR}/coverage.info.cleaned
-            COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/coverage.info ${CMAKE_BINARY_DIR}/coverage.info.cleaned
-            VERBATIM
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Resetting code coverage counters to zero.
-Processing code coverage counters and generating report.
-You can zip the directory ${CMAKE_BINARY_DIR}/coverage and upload the content to a web server.")
-endif ()
-
-#
-# Add uninstall-target
-#
-
-add_custom_target(uninstall
-        COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uninstall.cmake")
-
-# End of coverage
 
 include(CheckIncludeFileCXX)
 include(CheckIncludeFile)
@@ -593,7 +414,7 @@ endif ()
 
 if (COIN_HAS_LAPACK OR COIN_ENABLE_DOWNLOAD_LAPACK OR COIN_USE_SYSTEM_LAPACK)
     set(IPOPT_HAS_LAPACK 1)
-endif()
+endif ()
 
 if (WIN32)
     # snprintf not correctly detected under Visual Studio.
@@ -605,6 +426,187 @@ if (WIN32)
     set(HAVE__VSNPRINTF 1)
     set(IPOPT_HAS_VA_COPY 1)
 endif ()
+
+#-----------------------------------------------------------------------------
+# Manage compilation options
+#-----------------------------------------------------------------------------
+
+if (UNIX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wno-deprecated")
+
+    if (NOT ENABLE_SHARED_LIBRARIES)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+        set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fPIC")
+    endif ()
+    if (COIN_COMPILE_WARNINGS)
+        # Try to locate unitizalized variables
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wshadow -Wuninitialized ")
+        set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wall -Wshadow -Wmissing-prototypes -Wuninitialized ")
+    endif ()
+    if (COIN_COMPILE_STATIC)
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT APPLE)
+            check_c_linker_flag("-z muldef" ZFLAGDEFINED)
+            if (ZFLAGDEFINED)
+                set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z muldefs")
+            endif ()
+        endif ()
+    endif ()
+    if (COIN_COMPILE_COVERAGE)
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O0 --coverage")
+            set(CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -O0 --coverage")
+            set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -O0 --coverage")
+        endif ()
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version='408*'")
+        endif ()
+    endif ()
+    if (COIN_COMPILE_PROFILE)
+        set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -pg")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+    endif ()
+    if (COIN_COMPILE_PROFILE_VALGRIND)
+        set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -p")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -p")
+    else ()
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT APPLE)
+            check_c_linker_flag("-z muldef" ZFLAGDEFINED)
+            if (ZFLAGDEFINED)
+                set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z muldefs")
+            endif ()
+        endif ()
+    endif ()
+endif ()
+
+#-----------------------------------------------------------------------------
+# Manage specific VS flags
+#-----------------------------------------------------------------------------
+
+if (MSVC)
+    # Avoid Warning C4530 by using the flag /EHsc
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc ")
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} /EHsc ")
+endif ()
+
+#-----------------------------------------------------------------------------
+# Manage threads include dir under Windows
+#-----------------------------------------------------------------------------
+
+if (WIN32)
+    if (NOT COIN_THREADS_INC_PATH STREQUAL "None")
+        include_directories(${COIN_THREADS_INC_PATH})
+    endif ()
+    if (NOT COIN_THREADS_LIB_PATH STREQUAL "None")
+        link_directories(${COIN_THREADS_LIB_PATH})
+    endif ()
+endif ()
+
+# Check for a fortran compiler
+include(CMakeDetermineFortranCompiler)
+if (NOT CMAKE_Fortran_COMPILER)
+    message(STATUS "WARNING: fortran compiler not found. Disabling f77/f95 bindings")
+endif ()
+
+# Define FORTRAN_INTEGER_TYPE for Ipopt.
+set(FORTRAN_INTEGER_TYPE int)
+
+#-----------------------------------------------------------------------------
+# Detect name mangling convention used between Fortran and C
+#-----------------------------------------------------------------------------
+
+if (CMAKE_Fortran_COMPILER)
+    enable_language(Fortran)
+
+    include(FortranCInterface)
+
+    FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/F77Mangle.h
+            MACRO_NAMESPACE "F77_"
+            SYMBOL_NAMESPACE "F77_")
+
+    file(STRINGS ${CMAKE_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL\\(.*,.*\\) +(.*)")
+    string(REGEX MATCH "F77_GLOBAL\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
+    set(F77_FUNC         "F77_FUNC(name,NAME) ${CMAKE_MATCH_1}")
+    set(COIN_LAPACK_FUNC "COIN_LAPACK_FUNC(name,NAME) ${CMAKE_MATCH_1}")
+
+    file(STRINGS ${CMAKE_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL_\\(.*,.*\\) +(.*)")
+    string(REGEX MATCH "F77_GLOBAL_\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
+    set(F77_FUNC_         "F77_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
+    set(COIN_LAPACK_FUNC_ "COIN_LAPACK_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
+else ()
+    set(F77_FUNC          "F77_FUNC(name,NAME)  name##_")
+    set(F77_FUNC_         "F77_FUNC_(name,NAME) name##__")
+    set(COIN_LAPACK_FUNC  "COIN_LAPACK_FUNC(name,NAME)  name##_")
+    set(COIN_LAPACK_FUNC_ "COIN_LAPACK_FUNC_(name,NAME) name##__")
+endif ()
+
+
+set(F77_DUMMY_MAIN "" CACHE STRING "Define to dummy 'main' function (if any) required to link to the Fortran libraries.")
+set(FC_DUMMY_MAIN  "" CACHE STRING "Define to dummy 'main' function (if any) required to link to the Fortran libraries.")
+option(FC_DUMMY_MAIN_EQ_F77 "Define if F77 and FC dummy 'main' functions are identical." OFF)
+
+if (FC_DUMMY_MAIN_EQ_F77)
+    set(FC_DUMMY_MAIN "${F77_DUMMY_MAIN}")
+endif ()
+
+mark_as_advanced(F77_FUNC
+        F77_FUNC_
+        F77_DUMMY_MAIN
+        FC_DUMMY_MAIN
+        FC_DUMMY_MAIN_EQ_F77)
+
+# Manage coverage via lcov automatically
+
+if (COIN_COMPILE_COVERAGE AND NOT ((CMAKE_BUILD_TYPE STREQUAL "DEBUG") OR (CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")))
+    message(STATUS "Warning: to enable coverage, you must compile in DEBUG ou RELWITHDEBINFO mode")
+endif ()
+
+if (COIN_COMPILE_COVERAGE)
+    if (WIN32)
+        message(FATAL_ERROR "Error: code coverage analysis is only available under Linux for now.")
+    endif ()
+
+    find_program(GCOV_PATH gcov)
+    find_program(LCOV_PATH lcov)
+    find_program(GENHTML_PATH genhtml)
+
+    if (NOT GCOV_PATH)
+        message(FATAL_ERROR "gcov not found! Please install lcov and gcov. Aborting...")
+    endif ()
+
+    if (NOT LCOV_PATH)
+        message(FATAL_ERROR "lcov not found! Please install lcov and gcov. Aborting...")
+    endif ()
+
+    if (NOT GENHTML_PATH)
+        message(FATAL_ERROR "genhtml not found! Please install lcov and gcov. Aborting...")
+    endif ()
+
+    # /!\ FAILURE IF AT LEAST ONE TEST FAILS
+    # Capturing lcov counters and generating report
+    add_custom_target(coverage
+            COMMAND ${LCOV_PATH} --directory ${CMAKE_BINARY_DIR} --zerocounters
+            COMMAND ${LCOV_PATH} --capture --initial --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
+            COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_BINARY_DIR} ${CMAKE_CTEST_COMMAND} -LE "(LONG|FAIL)" -L "${COIN_COVERAGE_CTEST_LABEL}" || true
+            COMMAND ${LCOV_PATH} --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
+            COMMAND ${LCOV_PATH} --remove ${CMAKE_BINARY_DIR}/coverage.info "*/usr/include/*" '${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/*' --output-file ${CMAKE_BINARY_DIR}/coverage.info.cleaned
+            COMMAND ${GENHTML_PATH} -o ${CMAKE_BINARY_DIR}/coverage ${CMAKE_BINARY_DIR}/coverage.info.cleaned
+            COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/coverage.info ${CMAKE_BINARY_DIR}/coverage.info.cleaned
+            VERBATIM
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Resetting code coverage counters to zero.
+Processing code coverage counters and generating report.
+You can zip the directory ${CMAKE_BINARY_DIR}/coverage and upload the content to a web server.")
+endif ()
+
+#
+# Add uninstall-target
+#
+
+add_custom_target(uninstall
+        COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uninstall.cmake")
+
+# End of coverage
 
 if (COIN_USE_FAST_CODE)
     set(CMAKE_CXX_FLAGS       "${CMAKE_CXX_FLAGS} -O3 -fomit-frame-pointer ")

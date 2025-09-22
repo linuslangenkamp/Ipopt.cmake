@@ -26,20 +26,15 @@ It will automatically build and install MUMPS and Ipopt.
 
 ### Available CMake Options
 
-| Option Name                        | Description                                             | Default | Working |
-| ---------------------------------- | ------------------------------------------------------- | ------- | --------|
-| `IPOPT_HAS_MUMPS`                  | Enable Mumps solver                                     | `ON`    |   YES   |
-| `IPOPT_HAS_HSL`                    | Enable HSL interface                                    | `OFF`   |   ?     |
-| `IPOPT_SINGLE`                     | Build with single precision                             | `OFF`   |   NO    |
-| `IPOPT_INT64`                      | Build with 64-bit integer type                          | `OFF`   |   NO    |
-| `IPOPT_BUILD_EXAMPLES`             | Enable the building of examples                         | `ON`    |   YES   |
-
-You can also generate the full table of all options with:
+You can generate the full table of all options with:
 ```bash
 grep -R --include=CMakeLists.txt --include=\*.cmake "^[[:space:]]*option(" . \
   | sed -E 's/.*option[[:space:]]*\(([A-Za-z0-9_]+)[[:space:]]+"([^"]+)"[[:space:]]+([A-Z]+)\).*/|\1|\2|\3|/' \
   | column -t -s '|'
 ```
+
+### Note:
+Most options are untested for now!
 
 ### Build
 
