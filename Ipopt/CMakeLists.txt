@@ -8,31 +8,10 @@ set(IPOPT_VERSION_MINOR   "${IPOPT_MINOR_VERSION}"  CACHE STRING "The Ipopt mino
 set(IPOPT_VERSION_RELEASE "${IPOPT_PATCH_VERSION}"  CACHE STRING "The Ipopt patch version number")
 set(IPOPT_VERSION         "${IPOPT_VERSION_STRING}" CACHE STRING "The Ipopt version")
 
-set(IPOPT_WC_REVISION "0")
-if (EXISTS "${Ipopt_DIR}/.svn")
-    find_package(Subversion)
-    if (Subversion_FOUND)
-        Subversion_WC_INFO(${Ipopt_DIR} IPOPT)
-    endif ()
-endif ()
-
-if (EXISTS "${Ipopt_DIR}/.git")
-    find_package(Git)
-    if (Git_FOUND)
-        include(export_git)
-        GIT_WC_INFO(${Ipopt_DIR} IPOPT)
-        set(IPOPT_WC_REVISION "${IPOPT_WC_SVNEQUIV}") # alphanumeric rev not yet managed
-    endif ()
-endif ()
-
-message(STATUS "Current IPOPT revision is ${IPOPT_WC_REVISION}")
-set(IPOPT_SVN_REV "${IPOPT_WC_REVISION}" CACHE STRING "The IPOPT subversion revision" FORCE)
-
 mark_as_advanced(IPOPT_VERSION_MAJOR
         IPOPT_VERSION_MINOR
         IPOPT_VERSION_RELEASE
-        IPOPT_VERSION
-        IPOPT_SVN_REV)
+        IPOPT_VERSION)
 
 add_definitions(-DIPOPTLIB_BUILD)
 # add_definitions(-DIPOPT_BUILD -DIPOPTLIB_BUILD -DIPOPT_HAS_LAPACK)

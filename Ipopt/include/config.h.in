@@ -138,9 +138,6 @@
 /* Define to 1 if you have the `_vsnprintf' function. */
 #cmakedefine HAVE__VSNPRINTF
 
-/* SVN revision number of project */
-#define IPOPT_SVN_REV @IPOPT_SVN_REV@
-
 /* Version number of project */
 #define IPOPT_VERSION "@IPOPT_VERSION@"
 

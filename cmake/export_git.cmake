@@ -16,54 +16,6 @@ if (NOT TARGET git-update)
   add_custom_target(git-update)
 endif ()
 
-# GIT_WC_INFO(dir prefix)
-#   Input parameters:
-#   - dir: the root directory of the git repository
-#   - prefix: the prefix which will be prefixed to each result variable
-#   Macro which return 2 informations related to the git repo:
-#   - ${prefix}_WC_REVISION: the hash revision number of the current state of the repo
-#   - ${prefix}_WC_ROOT:     the origin URL of the repository
-#   - ${prefix}_WC_DESCRIBE: the 'git describe' version of the working copy
-#   - ${prefix}_WC_SVNEQUIV: return an equivalent to a svn revision number (the number of commit after a tag)
-
-macro(GIT_WC_INFO dir prefix)
-  execute_process(COMMAND ${GIT_EXECUTABLE} rev-list -n 1 HEAD
-                  WORKING_DIRECTORY ${dir}
-                  ERROR_VARIABLE GIT_error
-                  OUTPUT_VARIABLE ${prefix}_WC_REVISION_HASH
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  
-  set(${prefix}_WC_REVISION ${${prefix}_WC_REVISION_HASH})
-  
-  if (NOT ${GIT_error} EQUAL 0)
-    message(SEND_ERROR "Command \"${GIT_EXECUTABLE} rev-list -n 1 HEAD\" in directory ${dir} failed with output:\n${GIT_error}")
-  else ()
-    execute_process(COMMAND ${GIT_EXECUTABLE} name-rev ${${prefix}_WC_REVISION_HASH}
-                    WORKING_DIRECTORY ${dir}
-                    OUTPUT_VARIABLE ${prefix}_WC_REVISION_NAME
-                    OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif ()
-  
-  execute_process(COMMAND ${GIT_EXECUTABLE} config --get remote.origin.url
-                  WORKING_DIRECTORY ${dir}
-                  OUTPUT_VARIABLE ${prefix}_WC_URL
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  
-  set(${prefix}_WC_ROOT ${${prefix}_WC_URL})
-  
-  execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=8
-                  WORKING_DIRECTORY ${dir}
-                  OUTPUT_VARIABLE ${prefix}_WC_DESCRIBE
-                  ERROR_VARIABLE GIT_ERROR_VAR
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  
-  if (NOT GIT_ERROR_VAR STREQUAL "")
-    message(FATAL_ERROR "Error: Git describe doesn't work - missing tags ?")
-  endif ()
-  
-  string(REGEX REPLACE "(.*-)([0-9]*)(-g.*)" "\\2" ${prefix}_WC_SVNEQUIV "${${prefix}_WC_DESCRIBE}")
-endmacro(GIT_WC_INFO)
-
 # Clone a git repository by branch.
 # Input variables:
 # - Path_repo: the URL of the repo (git@192.168.0.18:NetworkDesignerDemo for example)
