@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.10)
 
 project (MUMPS C CXX Fortran)
 
-# set(MUMPS_METIS_INC_PATH "None" CACHE PATH "The METIS library include Path")
+set(MUMPS_METIS_INC_PATH "None" CACHE PATH "The METIS library include Path")
 
 set(MUMPS_METIS_LIB_PATH "None" CACHE PATH "The METIS library library Path")
 
