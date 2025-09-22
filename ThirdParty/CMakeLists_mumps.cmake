@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.10)
 
 project (MUMPS C CXX Fortran)
 
-option(MUMPS_USE_LIBSEQ   "Use the MUMPS sequential MPI stub" OFF)
+option(MUMPS_USE_LIBSEQ   "Use the MUMPS sequential MPI stub" ON)
 option(MUMPS_USE_METIS    "Use the Metis library"             ON)
 option(MUMPS_USE_F2C      "F2c was used to compiled CLapack"  OFF)
 option(MUMPS_INSTALL_COIN "Install MUMPS for CoinOR"          ON)

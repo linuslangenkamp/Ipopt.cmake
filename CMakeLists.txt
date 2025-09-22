@@ -761,5 +761,5 @@ message(STATUS "${color_cyan}Compilation definitions:${color_reset} ${ALL_DEFS}"
 # Install part
 #
 
-install(FILES ${Ipopt_DIR}/LICENSE ${Ipopt_DIR}/README.md
-        DESTINATION share/coin/doc/Ipopt/)
+# install(FILES ${Ipopt_DIR}/LICENSE ${Ipopt_DIR}/README.md
+#         DESTINATION share/coin/doc/Ipopt/)
