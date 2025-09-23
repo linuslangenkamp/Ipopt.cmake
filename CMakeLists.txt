@@ -57,8 +57,6 @@ option(COIN_ENABLE_DOWNLOAD_LAPACK       "Enable the download / compilation of B
 option(COIN_ENABLE_DOWNLOAD_CLAPACK      "Enable the download / compilation of CBlas / CLapack" OFF)
 option(COIN_ENABLE_DOWNLOAD_MINLPLIB     "Enable the download / run of minlp benchmark" OFF)
 option(COIN_USE_SYSTEM_LAPACK            "Enable the use of the system Lapack" ON)
-option(COIN_ENABLE_COMPILE_HSL           "Enable the compilation of HSL" OFF)
-option(COIN_USE_COINHSL                  "Use Coin HSL to compile the solver" OFF)
 option(COIN_DISABLE_THIRDPARTY           "Disable the build of the dependencies" OFF)
 if (WIN32)
     option(COIN_ENABLE_DOWNLOAD_PATCH      "Enable the download / use of Patch exe (for Windows)" OFF)
@@ -676,10 +674,10 @@ endif ()
 
 add_subdirectory(ThirdParty)
 
-include_directories(${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/include
-        ${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/include/ampl)
-link_directories(${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/lib
-        ${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/lib64)
+# include_directories(${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/include
+#         ${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/include/ampl)
+# link_directories(${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/lib
+#         ${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/lib64)
 
 #
 # HSL Management
@@ -691,19 +689,6 @@ endif ()
 
 if (IPOPT_HAS_LINEARSOLVERLOADER OR IPOPT_ENABLE_PARDISOSOLVERLOADER)
     find_package(DL)
-endif ()
-
-# TODO: potentially add defines here, if something breaks!
-#       Ipopt (v.3.13.4 >) renamed alot of defines, so this might be an issue
-
-# ?
-if (IPOPT_HAS_MUMPS)
-    set(COINHSL_HAS_MUMPS ON)
-endif ()
-
-# ?
-if (IPOPT_HAS_WSMP)
-    set(COINHSL_HAS_WSMP ON)
 endif ()
 
 add_subdirectory(Ipopt)
