@@ -113,6 +113,7 @@ include(coin-macros)
 include(GetAcInitVersion)
 include(CheckCLinkerFlag)
 include(GNUInstallDirs)
+include(cmake/utils.cmake)
 
 Enable_Testing ()
 
@@ -197,14 +198,17 @@ if (USE_PROCESSOR_EXTENSIONS)
     endif ()
 endif ()
 
-if(MUMPS_USE_METIS)
-    if(METIS_LIB_PATH AND METIS_INC_PATH)
-        add_library (METIS::METIS IMPORTED UNKNOWN)
-        set_target_properties(METIS::METIS PROPERTIES
+add_library(METIS_TARGET INTERFACE)
+
+if (MUMPS_USE_METIS)
+    if (METIS_LIB_PATH AND METIS_INC_PATH)
+        add_library(_METIS_USER_IMPORTED UNKNOWN IMPORTED)
+        set_target_properties(_METIS_USER_IMPORTED PROPERTIES
             IMPORTED_LOCATION "${METIS_LIB_PATH}"
             INTERFACE_INCLUDE_DIRECTORIES "${METIS_INC_PATH}"
         )
         message(STATUS "Using user-provided METIS: ${METIS_LIB_PATH}")
+        target_link_libraries(METIS_TARGET INTERFACE _METIS_USER_IMPORTED)
     else()
         find_package(METIS)
         if(NOT METIS_FOUND)
@@ -212,6 +216,8 @@ if(MUMPS_USE_METIS)
                                 "Provide -DMETIS_LIB_PATH=/path/to/libmetis.so "
                                 "and -DMETIS_INC_PATH=/path/to/include, "
                                 "or disable METIS with -DMUMPS_USE_METIS=OFF")
+        else()
+            target_link_libraries(METIS_TARGET INTERFACE METIS::METIS)
         endif()
     endif()
 endif()
@@ -268,7 +274,7 @@ coin_check_and_add_library_path(COIN_HAS_WSMP_LIBRARY_PATH)
 # Dependencies
 #-----------------------------------------------------------------------------
 
-if (COIN_USE_SYSTEM_LAPACK)
+if (COIN_USE_SYSTEM_LAPACK AND NOT COIN_ENABLE_DOWNLOAD_LAPACK)
     find_package(LAPACK REQUIRED)
 endif ()
 

@@ -72,138 +72,69 @@ endif ()
 # <===    System Lapack
 # #################################################
 
-# #################################################
-# ===>    Lapack
-# #################################################
-
-if (COIN_ENABLE_DOWNLOAD_LAPACK)
-    set(LAPACK_VERSION "3.8.0")
-
-    enable_language(Fortran)
-
-    if (UNIX)
-        set(LAPACK_C_FLAGS      "-w")
-        set(LAPACK_LINKER_FLAGS "-w")
-        if (NOT HAVE_64_BIT)
-            set(LAPACK_C_FLAGS      "-fPIC -w")
-            set(LAPACK_LINKER_FLAGS "-fPIC -w")
-        endif ()
-    endif ()
-
-    set(COIN_HAS_LAPACK ON CACHE BOOL "Enable the Lapack support of CoinUtils" FORCE)
-    set(COIN_HAS_BLAS   ON CACHE BOOL "Enable the Blas support of CoinUtils"   FORCE)
-
-    set(LAPACK_URL        "http:////www.netlib.org/lapack/lapack-${LAPACK_VERSION}.tar.gz" CACHE FILEPATH "Path to lapack-${LAPACK_VERSION}.tgz source archive")
-    set(LAPACK_InstallDir "${ext-InstallDir}/Lapack-${LAPACK_VERSION}/${CMAKE_CFG_INTDIR}/")
-
-    if (WIN32 AND NOT MINGW)
-        ExternalProject_Add(ext-Lapack
-                PREFIX            ${LAPACK_InstallDir}
-                URL               ${LAPACK_URL}
-                UPDATE_COMMAND    ""
-                CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${LAPACK_InstallDir}/src/ext-Lapack/build
-                && ${CMAKE_COMMAND} -E chdir ${LAPACK_InstallDir}/src/ext-Lapack/build ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${ext-InstallDir} -DBUILD_DEPRECATED:Bool=ON -DLAPACKE:Bool=ON -DLAPACKE_WITH_TMG:Bool=ON -DCMAKE_C_FLAGS:String=${CLAPACK_C_FLAGS} -DCMAKE_EXE_LINKER_FLAGS:String=${LAPACK_LINKER_FLAGS} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -G ${CMAKE_GENERATOR} ..
-                BUILD_COMMAND     ${CMAKE_COMMAND} -E chdir ${LAPACK_InstallDir}/src/ext-Lapack/build ${CMAKE_MAKE_PROGRAM}
-                INSTALL_COMMAND   ${CMAKE_COMMAND} -E copy ${LAPACK_InstallDir}/src/ext-Lapack/build/lib/lapack.lib  ${ext-InstallDir}/lib
-                && ${CMAKE_COMMAND} -E copy ${LAPACK_InstallDir}/src/ext-Lapack/build/lib/lapacke.lib ${ext-InstallDir}/lib
-                && ${CMAKE_COMMAND} -E copy ${LAPACK_InstallDir}/src/ext-Lapack/build/lib/blas.lib    ${ext-InstallDir}/lib
-                && ${CMAKE_COMMAND} -E copy ${LAPACK_InstallDir}/src/ext-Lapack/build/lib/tmglib.lib  ${ext-InstallDir}/lib
-                )
-    elseif (UNIX)
-        ExternalProject_Add(ext-Lapack
-                PREFIX            ${LAPACK_InstallDir}
-                URL               ${LAPACK_URL}
-                UPDATE_COMMAND    ""
-                CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${LAPACK_InstallDir}/src/ext-Lapack/build
-                && ${CMAKE_COMMAND} -E chdir ${LAPACK_InstallDir}/src/ext-Lapack/build ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${ext-InstallDir} -DBUILD_DEPRECATED:Bool=ON -DLAPACKE:Bool=ON -DLAPACKE_WITH_TMG:Bool=ON -DCMAKE_C_FLAGS:String=${CLAPACK_C_FLAGS} -DCMAKE_EXE_LINKER_FLAGS:String=${LAPACK_LINKER_FLAGS} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} ..
-                BUILD_COMMAND     ${CMAKE_COMMAND} -E chdir ${LAPACK_InstallDir}/src/ext-Lapack/build ${CMAKE_MAKE_PROGRAM} -j 16
-                INSTALL_COMMAND   ${CMAKE_COMMAND} -E copy ${LAPACK_InstallDir}/src/ext-Lapack/build/lib/liblapack.a  ${ext-InstallDir}/lib
-                && ${CMAKE_COMMAND} -E copy ${LAPACK_InstallDir}/src/ext-Lapack/build/lib/liblapacke.a ${ext-InstallDir}/lib
-                && ${CMAKE_COMMAND} -E copy ${LAPACK_InstallDir}/src/ext-Lapack/build/lib/libblas.a    ${ext-InstallDir}/lib
-                && ${CMAKE_COMMAND} -E copy ${LAPACK_InstallDir}/src/ext-Lapack/build/lib/libtmglib.a  ${ext-InstallDir}/lib
-                )
-    endif ()
-endif ()
-
-if (COIN_ENABLE_FIND_LAPACK)
-    find_package(LAPACK)
-    find_package(BLAS)
-
-    if (LAPACK_FOUND AND BLAS_FOUND)
-        set(COIN_HAS_LAPACK ON CACHE BOOL "Enable the Lapack support of CoinUtils" FORCE)
-        set(COIN_HAS_BLAS   ON CACHE BOOL "Enable the Blas support of CoinUtils"   FORCE)
-    else ()
-        set(COIN_HAS_LAPACK OFF CACHE BOOL "Enable the Lapack support of CoinUtils" FORCE)
-        set(COIN_HAS_BLAS   OFF CACHE BOOL "Enable the Blas support of CoinUtils"   FORCE)
-    endif ()
-endif ()
-
-# #################################################
-# <===    Lapack
-# #################################################
-
-# #################################################
-# ===>    MinGW Lapack
-# #################################################
-
-if (COIN_ENABLE_DOWNLOAD_MINGW_LAPACK)
-    set(COIN_MINGW_LAPACK_ZIP_FILE "None" CACHE FILEPATH "Path to the zip file containing MinGW Lapack")
-
-    set(COIN_HAS_LAPACK ON CACHE BOOL "Enable the Lapack support of CoinUtils" FORCE)
-    set(COIN_HAS_BLAS   ON CACHE BOOL "Enable the Blas support of CoinUtils"   FORCE)
-
-    ExternalProject_Add(ext-Lapack
-            PREFIX            ${ext-InstallDir}/MinGW-Lapack
-            URL               ${COIN_MINGW_LAPACK_ZIP_FILE}
-            UPDATE_COMMAND    ""
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND     ""
-            INSTALL_COMMAND   ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/lib/liblapack.lib       ${ext-InstallDir}/lib/lapack.lib
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/lib/libblas.lib         ${ext-InstallDir}/lib/blas.lib
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/lib/libtmglib.lib       ${ext-InstallDir}/lib/tmglib.lib
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/liblapack.dll       ${ext-InstallDir}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libblas.dll         ${ext-InstallDir}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libtmglib.dll       ${ext-InstallDir}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libgcc_s_seh-1.dll  ${ext-InstallDir}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libgfortran-3.dll   ${ext-InstallDir}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libquadmath-0.dll   ${ext-InstallDir}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libwinpthread-1.dll ${ext-InstallDir}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/liblapack.dll       ${CMAKE_BINARY_DIR}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libblas.dll         ${CMAKE_BINARY_DIR}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libtmglib.dll       ${CMAKE_BINARY_DIR}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libgcc_s_seh-1.dll  ${CMAKE_BINARY_DIR}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libgfortran-3.dll   ${CMAKE_BINARY_DIR}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libquadmath-0.dll   ${CMAKE_BINARY_DIR}/bin
-            && ${CMAKE_COMMAND} -E copy ${ext-InstallDir}/MinGW-Lapack/src/ext-Lapack/bin/libwinpthread-1.dll ${CMAKE_BINARY_DIR}/bin
-            )
-endif ()
-
-# #################################################
-# <===    MinGW Lapack
-# #################################################
-
-# ============================================================
-# ===> LAPACK/BLAS (example, adapt to your setup)
-# ============================================================
-
-# TODO: also set LAPACK::LAPACK ?!
-
-if(COIN_USE_SYSTEM_LAPACK)
-    find_package(LAPACK REQUIRED)
-    set(LAPACK_TARGET LAPACK::LAPACK)
-else()
-    set(LAPACK_TARGET ext-Lapack)
-endif()
-
-# ============================================================
-# ===> MUMPS via FetchContent
-# ============================================================
-
 include(FetchContent)
 
 if (POLICY CMP0169)
     cmake_policy(SET CMP0169 OLD) # needed for non-deprecated single arg FetchContent_Populate
 endif ()
+
+# #################################################
+# ===>    Lapack
+# #################################################
+
+add_library(LAPACK_TARGET INTERFACE)
+
+if(COIN_ENABLE_DOWNLOAD_LAPACK)
+    safe_tmp(_TMP_BUILD_SHARED_LIBS BUILD_SHARED_LIBS)
+    safe_tmp(_TMP_BUILD_TESTING     BUILD_TESTING)
+    safe_tmp(_TMP_CFLAGS            CMAKE_C_FLAGS)
+    safe_tmp(_TMP_CXXFLAGS          CMAKE_CXX_FLAGS)
+    safe_tmp(_TMP_FortranFLAGS      CMAKE_Fortran_FLAGS)
+
+    set(BUILD_SHARED_LIBS   ON  CACHE BOOL "Build shared libraries for OpenBLAS" FORCE)
+    set(BUILD_TESTING       OFF CACHE BOOL "Build testing for OpenBLAS" FORCE)
+
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        set(CMAKE_C_FLAGS       "${CMAKE_C_FLAGS} -w")
+        set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -w")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -w")
+    endif()
+
+    # sadly we cannot restrict ourselves to only double and complex OpenBLAS build,
+    # since the utest and ctest will fail and the build terminates
+
+    set(OPEN_BLAS_VERSION "0.3.30")
+    set(OPEN_BLAS_URL "https://github.com/OpenMathLib/OpenBLAS/archive/refs/tags/v${OPEN_BLAS_VERSION}.tar.gz")
+
+    FetchContent_Declare(
+        OpenBLAS
+        URL ${OPEN_BLAS_URL}
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+
+    FetchContent_MakeAvailable(OpenBLAS)
+    target_link_libraries(LAPACK_TARGET INTERFACE LAPACK::openblas_shared)
+
+    restore_tmp(BUILD_SHARED_LIBS   _TMP_BUILD_SHARED_LIBS)
+    restore_tmp(BUILD_TESTING       _TMP_BUILD_TESTING)
+    restore_tmp(CMAKE_C_FLAGS       _TMP_CFLAGS)
+    restore_tmp(CMAKE_CXX_FLAGS     _TMP_CXXFLAGS)
+    restore_tmp(CMAKE_Fortran_FLAGS _TMP_FortranFLAGS)
+
+elseif(COIN_USE_SYSTEM_LAPACK)
+    find_package(LAPACK REQUIRED)
+    target_link_libraries(LAPACK_TARGET INTERFACE LAPACK::LAPACK)
+else()
+    message(FATAL_ERROR "No LAPACK available, because COIN_USE_SYSTEM_LAPACK=OFF and COIN_ENABLE_DOWNLOAD_LAPACK=OFF.")
+endif()
+
+# #################################################
+# <===    Lapack
+# #################################################
+
+# ============================================================
+# ===> MUMPS via FetchContent
+# ============================================================
 
 if (COIN_ENABLE_DOWNLOAD_MUMPS)
     set(MUMPS_VERSION "5.8.1")
@@ -334,7 +265,7 @@ macro(add_library_mod _target)
         add_dependencies(${_target} ext-ASL)
     endif ()
     if (COIN_ENABLE_DOWNLOAD_LAPACK)
-        add_dependencies(${_target} ext-Lapack)
+        add_dependencies(${_target} LAPACK_TARGET)
     endif ()
 endmacro ()
 
@@ -348,7 +279,7 @@ macro(add_executable_mod _target)
         add_dependencies(${_target} ext-ASL)
     endif ()
     if (COIN_ENABLE_DOWNLOAD_LAPACK)
-        add_dependencies(${_target} ext-Lapack) # TODO: link with LAPACK::LAPACK or ext-Lapack depending on ctx
+        add_dependencies(${_target} LAPACK_TARGET)
     endif ()
 endmacro ()
 

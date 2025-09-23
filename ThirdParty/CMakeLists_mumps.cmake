@@ -79,9 +79,8 @@ else ()
 endif ()
 
 
-if (NOT BLAS_FOUND OR NOT LAPACK_FOUND)
-  message(STATUS "Searching for BLAS and LAPACK")
-  find_package(BLAS   REQUIRED)
+if (NOT LAPACK_FOUND AND NOT COIN_ENABLE_DOWNLOAD_LAPACK)
+  message(STATUS "Searching for LAPACK")
   find_package(LAPACK REQUIRED)
 endif ()
 
@@ -628,52 +627,34 @@ set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -w -fcray-pointer -fallow-a
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -DAdd_")
 #endif ()
 
-if (BLAS_FOUND)
-    set(LINK_LIBS ${LINK_LIBS}
-                    BLAS::BLAS)
-endif ()
-
-if (LAPACK_FOUND)
-    set(LINK_LIBS ${LINK_LIBS}
-                    LAPACK::LAPACK)
-endif ()
+set(LINK_LIBS ${LINK_LIBS} LAPACK_TARGET)
 
 if (WIN32)
   if (MUMPS_USE_LIBSEQ)
-    set(LINK_LIBS ${LINK_LIBS}
-                  seq)
+    set(LINK_LIBS ${LINK_LIBS} seq)
   else ()
-    set(LINK_LIBS ${LINK_LIBS}
-                  ${MPI_LIB_NAME})
+    set(LINK_LIBS ${LINK_LIBS} ${MPI_LIB_NAME})
   endif ()
 
   if (MKL_FOUND)
-    set(LINK_LIBS ${LINK_LIBS}
-                  ${ATLAS_LIBRARIES}
-                  libiomp5mt)
+    set(LINK_LIBS ${LINK_LIBS} ${ATLAS_LIBRARIES} libiomp5mt)
   endif ()
 else ()
   if (MKL_FOUND)
-    set(LINK_LIBS ${LINK_LIBS}
-                  ${ATLAS_LIBRARIES}
-                  iomp5)
+    set(LINK_LIBS ${LINK_LIBS} ${ATLAS_LIBRARIES} iomp5)
   endif ()
 
   if (MUMPS_USE_LIBSEQ)
-    set(LINK_LIBS ${LINK_LIBS}
-                  seq)
+    set(LINK_LIBS ${LINK_LIBS} seq)
   else ()
-    set(LINK_LIBS ${LINK_LIBS}
-                  ${MPI_LIB_NAME})
+    set(LINK_LIBS ${LINK_LIBS} ${MPI_LIB_NAME})
   endif ()
 
-  set(LINK_LIBS ${LINK_LIBS}
-                pthread)
+  set(LINK_LIBS ${LINK_LIBS} pthread)
 endif ()
 
 if (MUMPS_USE_METIS)
-  set(LINK_LIBS ${LINK_LIBS}
-                METIS::METIS m)
+  set(LINK_LIBS ${LINK_LIBS} METIS_TARGET m)
 endif ()
 
 if (MUMPS_USE_LIBSEQ)
@@ -685,6 +666,12 @@ if (NOT MUMPS_USE_LIBSEQ)
   target_include_directories(pord BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/PORD/include)
 endif ()
 
+# To allow the link of examples on the cluster
+if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
+  set(LINK_LIBS ${LINK_LIBS}
+                ifcore)
+endif ()
+
 add_library(mumps_common STATIC ${MUMPS_COMMON_SRCS})
 
 # TODO: add MUMPS single precision
@@ -694,7 +681,7 @@ add_library(mumps_common STATIC ${MUMPS_COMMON_SRCS})
 #
 
 add_library(dmumps STATIC ${MUMPS_D_SRCS})
-target_link_libraries(dmumps mumps_common)
+target_link_libraries(dmumps mumps_common ${LINK_LIBS})
 
 # add_library(cmumps STATIC ${MUMPS_C_SRCS})
 # target_link_libraries(cmumps mumps_common)
@@ -713,12 +700,6 @@ target_link_libraries(dmumps mumps_common)
   #set_property(TARGET libcmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_c")
   #set_property(TARGET libzmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_z")
 #endif ()
-
-# To allow the link of examples on the cluster
-if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-  set(LINK_LIBS ${LINK_LIBS}
-                ifcore)
-endif ()
 
 add_executable(dsimple_test examples/dsimpletest.F)
 target_link_libraries(dsimple_test dmumps mumps_common ${LINK_LIBS})
