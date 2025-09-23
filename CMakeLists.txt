@@ -54,7 +54,6 @@ option(COIN_ENABLE_DOWNLOAD_MUMPS        "Enable the download / compilation of M
 option(COIN_ENABLE_DOWNLOAD_ASL          "Enable the download / compilation of Ampl Solver Library" OFF)
 option(COIN_ENABLE_DOWNLOAD_MINGW_LAPACK "Enable the download / compilation of MinGW compiled Blas / Lapack" OFF)
 option(COIN_ENABLE_DOWNLOAD_LAPACK       "Enable the download / compilation of Blas / Lapack" OFF)
-option(COIN_ENABLE_DOWNLOAD_CLAPACK      "Enable the download / compilation of CBlas / CLapack" OFF)
 option(COIN_ENABLE_DOWNLOAD_MINLPLIB     "Enable the download / run of minlp benchmark" OFF)
 option(COIN_USE_SYSTEM_LAPACK            "Enable the use of the system Lapack" ON)
 option(COIN_DISABLE_THIRDPARTY           "Disable the build of the dependencies" OFF)
@@ -68,7 +67,6 @@ option(COIN_ENABLE_COMPAT            "Enable libc compatibility" OFF)   # Do not
 # MUMPS build options
 option(MUMPS_USE_LIBSEQ     "Use the MUMPS sequential MPI stub" ON)
 option(MUMPS_USE_METIS      "Use the Metis library"             ON)
-option(MUMPS_USE_F2C        "F2c was used to compiled CLapack"  OFF)
 option(MUMPS_INSTALL_COIN   "Install MUMPS for CoinOR"          ON)
 
 set(METIS_LIB_PATH "" CACHE STRING "Path to libmetis (file) or directory containing libmetis")

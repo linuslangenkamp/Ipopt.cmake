@@ -49,12 +49,10 @@ set(CMAKE_MAKE_PROGRAM_OLD "${CMAKE_MAKE_PROGRAM}")
 
 if (NOT COIN_ENABLE_DOWNLOAD_MINGW_LAPACK AND
         NOT COIN_ENABLE_DOWNLOAD_LAPACK AND
-        NOT COIN_ENABLE_DOWNLOAD_CLAPACK AND
         NOT COIN_USE_SYSTEM_LAPACK)
     message(WARNING "One kind of Blas / Lapack can be selected:
  - COIN_ENABLE_DOWNLOAD_MINGW_LAPACK AND
  - COIN_ENABLE_DOWNLOAD_LAPACK AND
- - COIN_ENABLE_DOWNLOAD_CLAPACK AND
  - COIN_USE_SYSTEM_LAPACK")
 endif ()
 
@@ -66,70 +64,12 @@ if (COIN_USE_SYSTEM_LAPACK)
     find_package(LAPACK REQUIRED)
 
     set(COIN_ENABLE_DOWNLOAD_LAPACK  OFF CACHE BOOL "Enable the download / compilation of Blas / Lapack")
-    set(COIN_ENABLE_DOWNLOAD_CLAPACK OFF CACHE BOOL "Enable the download / compilation of CBlas / CLapack")
 
     get_filename_component(LAPACK_LINK_PATH "${LAPACK_LIBRARIES}" DIRECTORY)
 endif ()
 
 # #################################################
 # <===    System Lapack
-# #################################################
-
-# #################################################
-# ===>    CLapack
-# #################################################
-
-if (COIN_ENABLE_DOWNLOAD_CLAPACK)
-    set(CLAPACK_VERSION "3.2.1")
-
-    if (UNIX)
-        set(CLAPACK_C_FLAGS      "-w")
-        set(CLAPACK_LINKER_FLAGS "-w")
-        if (NOT HAVE_64_BIT)
-            set(CLAPACK_C_FLAGS      "-fPIC -w")
-            set(CLAPACK_LINKER_FLAGS "-fPIC -w")
-        endif ()
-    endif ()
-
-    set(COIN_HAS_LAPACK ON CACHE BOOL "Enable the Lapack support of CoinUtils" FORCE)
-    set(COIN_HAS_BLAS   ON CACHE BOOL "Enable the Blas support of CoinUtils"   FORCE)
-
-    set(CLAPACK_URL        "http:////netlib.sandia.gov/clapack/clapack-${CLAPACK_VERSION}-CMAKE.tgz" CACHE FILEPATH "Path to clapack-${CLAPACK_VERSION}-CMAKE.tgz source archive")
-    set(CLAPACK_InstallDir "${ext-InstallDir}/CLapack-${CLAPACK_VERSION}/${CMAKE_CFG_INTDIR}/")
-
-    if (WIN32 AND NOT MINGW)
-        ExternalProject_Add(ext-Lapack
-                PREFIX            ${CLAPACK_InstallDir}
-                URL               ${CLAPACK_URL}
-                UPDATE_COMMAND    ""
-                PATCH_COMMAND     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/f2c.h ${CLAPACK_InstallDir}/src/ext-Lapack/INCLUDE/
-                && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/f2c.h ${CLAPACK_InstallDir}/src/ext-Lapack/F2CLIBS/libf2c/
-                CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${CLAPACK_InstallDir}/src/ext-Lapack/build
-                && ${CMAKE_COMMAND} -E chdir ${CLAPACK_InstallDir}/src/ext-Lapack/build ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${ext-InstallDir} -DCMAKE_C_FLAGS:String=${CLAPACK_C_FLAGS} -DCMAKE_EXE_LINKER_FLAGS:String=${CLAPACK_LINKER_FLAGS} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -G ${CMAKE_GENERATOR} ..
-                BUILD_COMMAND     ${CMAKE_COMMAND} -E chdir ${CLAPACK_InstallDir}/src/ext-Lapack/build ${CMAKE_MAKE_PROGRAM}
-                INSTALL_COMMAND   ${CMAKE_COMMAND} -E copy ${CLAPACK_InstallDir}/src/ext-Lapack/build/SRC/lapack.lib            ${ext-InstallDir}/lib
-                && ${CMAKE_COMMAND} -E copy ${CLAPACK_InstallDir}/src/ext-Lapack/build/F2CLIBS/libf2c/libf2c.lib ${ext-InstallDir}/lib/f2c.lib
-                && ${CMAKE_COMMAND} -E copy ${CLAPACK_InstallDir}/src/ext-Lapack/build/BLAS/SRC/blas.lib         ${ext-InstallDir}/lib
-                )
-    elseif (UNIX)
-        ExternalProject_Add(ext-Lapack
-                PREFIX            ${CLAPACK_InstallDir}
-                URL               ${CLAPACK_URL}
-                UPDATE_COMMAND    ""
-                PATCH_COMMAND     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/f2c.h ${CLAPACK_InstallDir}/src/ext-Lapack/INCLUDE/
-                && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/f2c.h ${CLAPACK_InstallDir}/src/ext-Lapack/F2CLIBS/libf2c/
-                CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${CLAPACK_InstallDir}/src/ext-Lapack/build
-                && ${CMAKE_COMMAND} -E chdir ${CLAPACK_InstallDir}/src/ext-Lapack/build ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${ext-InstallDir} -DCMAKE_C_FLAGS:String=${CLAPACK_C_FLAGS} -DCMAKE_EXE_LINKER_FLAGS:String=${CLAPACK_LINKER_FLAGS} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} ..
-                BUILD_COMMAND     ${CMAKE_COMMAND} -E chdir ${CLAPACK_InstallDir}/src/ext-Lapack/build ${CMAKE_MAKE_PROGRAM} -j 16
-                INSTALL_COMMAND   ${CMAKE_COMMAND} -E copy ${CLAPACK_InstallDir}/src/ext-Lapack/build/SRC/liblapack.a         ${ext-InstallDir}/lib
-                && ${CMAKE_COMMAND} -E copy ${CLAPACK_InstallDir}/src/ext-Lapack/build/F2CLIBS/libf2c/libf2c.a ${ext-InstallDir}/lib
-                && ${CMAKE_COMMAND} -E copy ${CLAPACK_InstallDir}/src/ext-Lapack/build/BLAS/SRC/libblas.a      ${ext-InstallDir}/lib
-                )
-    endif ()
-endif ()
-
-# #################################################
-# <===    CLapack
 # #################################################
 
 # #################################################
@@ -321,15 +261,6 @@ endif ()
 # #################################################
 
 # #################################################
-# ===>    HSL
-# #################################################
-
-
-# #################################################
-# <===    HSL
-# #################################################
-
-# #################################################
 # ===> Tests
 # #################################################
 
@@ -402,7 +333,7 @@ macro(add_library_mod _target)
     if (COIN_ENABLE_DOWNLOAD_ASL)
         add_dependencies(${_target} ext-ASL)
     endif ()
-    if (COIN_ENABLE_DOWNLOAD_LAPACK OR COIN_ENABLE_DOWLOAD_CLAPACK)
+    if (COIN_ENABLE_DOWNLOAD_LAPACK)
         add_dependencies(${_target} ext-Lapack)
     endif ()
 endmacro ()
@@ -416,8 +347,8 @@ macro(add_executable_mod _target)
     if (COIN_ENABLE_DOWNLOAD_ASL)
         add_dependencies(${_target} ext-ASL)
     endif ()
-    if (COIN_ENABLE_DOWNLOAD_LAPACK OR COIN_ENABLE_DOWLOAD_CLAPACK)
-        add_dependencies(${_target} ext-Lapack)
+    if (COIN_ENABLE_DOWNLOAD_LAPACK)
+        add_dependencies(${_target} ext-Lapack) # TODO: link with LAPACK::LAPACK or ext-Lapack depending on ctx
     endif ()
 endmacro ()
 

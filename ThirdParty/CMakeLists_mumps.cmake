@@ -667,11 +667,6 @@ else ()
                   ${MPI_LIB_NAME})
   endif ()
 
-  if (MUMPS_USE_F2C)
-    set(LINK_LIBS ${LINK_LIBS}
-                  f2c)
-  endif ()
-
   set(LINK_LIBS ${LINK_LIBS}
                 pthread)
 endif ()
