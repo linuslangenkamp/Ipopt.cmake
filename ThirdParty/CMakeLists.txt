@@ -244,47 +244,24 @@ endif ()
 # <===    MinGW Lapack
 # #################################################
 
-include(FetchContent)
-
-# ============================================================
-# ===> METIS
-# ============================================================
-
-if(MUMPS_USE_METIS)
-    find_package(METIS)
-    if(METIS_LIB_PATH AND METIS_INC_PATH)
-        set_target_properties(METIS::METIS PROPERTIES
-            IMPORTED_LOCATION "${METIS_LIB_PATH}"
-            INTERFACE_INCLUDE_DIRECTORIES "${METIS_INC_PATH}"
-        )
-        message(STATUS "Using user-provided METIS: ${METIS_LIB_PATH}")
-    else()
-        if(METIS_FOUND)
-            message(STATUS "Found system METIS: ${METIS_LIBRARY}")
-        else()
-            message(FATAL_ERROR "METIS is required for MUMPS but not found. "
-                                "Provide -DMETIS_LIB_PATH=/path/to/libmetis.so "
-                                "and -DMETIS_INC_PATH=/path/to/include, "
-                                "or disable METIS with -DMUMPS_USE_METIS=OFF")
-        endif()
-    endif()
-endif()
-
 # ============================================================
 # ===> LAPACK/BLAS (example, adapt to your setup)
 # ============================================================
+
+# TODO: also set LAPACK::LAPACK ?!
 
 if(COIN_USE_SYSTEM_LAPACK)
     find_package(LAPACK REQUIRED)
     set(LAPACK_TARGET LAPACK::LAPACK)
 else()
-    # Assume you vendor Lapack elsewhere and expose it as ext-Lapack
     set(LAPACK_TARGET ext-Lapack)
 endif()
 
 # ============================================================
 # ===> MUMPS via FetchContent
 # ============================================================
+
+include(FetchContent)
 
 if (COIN_ENABLE_DOWNLOAD_MUMPS)
     set(MUMPS_VERSION "5.8.1")
@@ -297,37 +274,16 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
 
     FetchContent_GetProperties(Mumps)
     if(NOT mumps_POPULATED)
-        FetchContent_Populate(Mumps)
+        FetchContent_MakeAvailable(Mumps)
 
-        # Copy our patched build system into the source dir
         file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists_mumps.cmake
              DESTINATION ${mumps_SOURCE_DIR})
         file(RENAME ${mumps_SOURCE_DIR}/CMakeLists_mumps.cmake
              ${mumps_SOURCE_DIR}/CMakeLists.txt)
 
-        # Now MUMPS looks like a real CMake project
         add_subdirectory(${mumps_SOURCE_DIR} ${mumps_BINARY_DIR})
     endif()
 endif()
-
-
-# ============================================================
-# ===> Linking
-# ============================================================
-# Inside CMakeLists_mumps.cmake you can now simply do:
-#
-# add_library(mumps ...)
-# target_link_libraries(mumps
-#     PRIVATE
-#         ${LAPACK_TARGET}
-# )
-#
-# if(MUMPS_USE_METIS)
-#     target_link_libraries(mumps PRIVATE METIS::METIS)
-# endif()
-#
-# Everything propagates automatically (include dirs, libs, etc).
-
 
 # #################################################
 # ===> ASL compilation

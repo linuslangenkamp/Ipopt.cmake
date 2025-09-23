@@ -201,9 +201,23 @@ if (USE_PROCESSOR_EXTENSIONS)
     endif ()
 endif ()
 
-if (MUMPS_USE_METIS)
-    # we need to search for METIS to define the target METIS::METIS -> override paths later if needed
-    find_package(METIS)
+if(MUMPS_USE_METIS)
+    if(METIS_LIB_PATH AND METIS_INC_PATH)
+        add_library (METIS::METIS IMPORTED UNKNOWN)
+        set_target_properties(METIS::METIS PROPERTIES
+            IMPORTED_LOCATION "${METIS_LIB_PATH}"
+            INTERFACE_INCLUDE_DIRECTORIES "${METIS_INC_PATH}"
+        )
+        message(STATUS "Using user-provided METIS: ${METIS_LIB_PATH}")
+    else()
+        find_package(METIS)
+        if(NOT METIS_FOUND)
+            message(FATAL_ERROR "METIS is required for MUMPS but not found. "
+                                "Provide -DMETIS_LIB_PATH=/path/to/libmetis.so "
+                                "and -DMETIS_INC_PATH=/path/to/include, "
+                                "or disable METIS with -DMUMPS_USE_METIS=OFF")
+        endif()
+    endif()
 endif()
 
 # Check for MKL
