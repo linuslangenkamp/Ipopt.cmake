@@ -5,16 +5,11 @@ cmake_minimum_required (VERSION 3.10)
 
 project (MUMPS C CXX Fortran)
 
-set(MUMPS_METIS_INC_PATH "None" CACHE PATH "The METIS library include Path")
-
-set(MUMPS_METIS_LIB_PATH "None" CACHE PATH "The METIS library library Path")
-
 set(MUMPS_LAPACK_LIB_PATH "None" CACHE PATH "The Lapack library library Path")
 
 message(STATUS "Building MUMPS with METIS: ${MUMPS_USE_METIS}")
-message(STATUS "METIS library path: ${MUMPS_METIS_LIB_PATH}")
 
-set(INCLUDEDIR ${CMAKE_SOURCE_DIR}/../../../include)
+set(INCLUDEDIR ${mumps_SOURCE_DIR}/include)
 
 include(GNUInstallDirs)
 
@@ -133,14 +128,6 @@ endif ()
 
 if (MUMPS_USE_METIS)
   add_definitions(-Dmetis)
-endif ()
-
-if (NOT MUMPS_METIS_INC_PATH STREQUAL "None")
- include_directories(${MUMPS_METIS_INC_PATH})
-endif ()
-
-if (NOT MUMPS_METIS_LIB_PATH STREQUAL "None")
-  link_directories(${MUMPS_METIS_LIB_PATH})
 endif ()
 
 if (NOT MUMPS_LAPACK_LIB_PATH STREQUAL "None")
@@ -696,7 +683,7 @@ endif ()
 
 if (MUMPS_USE_METIS)
   set(LINK_LIBS ${LINK_LIBS}
-                metis m)
+                METIS::METIS m)
 endif ()
 
 if (MUMPS_USE_LIBSEQ)
@@ -806,4 +793,3 @@ install(DIRECTORY include/
 install(DIRECTORY PORD/include/
         DESTINATION ${INCLUDEDIR}/
         PATTERN "*.h")
-

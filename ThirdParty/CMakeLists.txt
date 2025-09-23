@@ -244,93 +244,90 @@ endif ()
 # <===    MinGW Lapack
 # #################################################
 
-# #################################################
-# ===> Metis compilation
-# #################################################
+include(FetchContent)
 
-if (COIN_ENABLE_DOWNLOAD_METIS)
-    set(METIS_VERSION "4.0.3")
+# ============================================================
+# ===> METIS
+# ============================================================
 
-    if (NOT EXISTS ${ext-InstallDir}/include/metis)
-        make_directory(${ext-InstallDir}/include/metis)
-    endif ()
+if(MUMPS_USE_METIS)
+    find_package(METIS)
+    if(METIS_LIB_PATH AND METIS_INC_PATH)
+        set_target_properties(METIS::METIS PROPERTIES
+            IMPORTED_LOCATION "${METIS_LIB_PATH}"
+            INTERFACE_INCLUDE_DIRECTORIES "${METIS_INC_PATH}"
+        )
+        message(STATUS "Using user-provided METIS: ${METIS_LIB_PATH}")
+    else()
+        if(METIS_FOUND)
+            message(STATUS "Found system METIS: ${METIS_LIBRARY}")
+        else()
+            message(FATAL_ERROR "METIS is required for MUMPS but not found. "
+                                "Provide -DMETIS_LIB_PATH=/path/to/libmetis.so "
+                                "and -DMETIS_INC_PATH=/path/to/include, "
+                                "or disable METIS with -DMUMPS_USE_METIS=OFF")
+        endif()
+    endif()
+endif()
 
-    set(METIS_URL        "http:////glaros.dtc.umn.edu/gkhome/fetch/sw/metis/OLD/metis-${METIS_VERSION}.tar.gz" CACHE FILEPATH "Path to metis-${METIS_VERSION}.tar.gz source archive")
-    set(METIS_InstallDir "${ext-InstallDir}/Metis-${METIS_VERSION}/${CMAKE_CFG_INTDIR}/")
+# ============================================================
+# ===> LAPACK/BLAS (example, adapt to your setup)
+# ============================================================
 
-    ExternalProject_Add(ext-Metis
-            PREFIX            ${METIS_InstallDir}
-            URL               ${METIS_URL}
-            UPDATE_COMMAND    ""
-            PATCH_COMMAND     ""
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND     ${CMAKE_COMMAND} -E chdir ${METIS_InstallDir}/src/ext-Metis/ ${CMAKE_MAKE_PROGRAM} -j 16
-            INSTALL_COMMAND   ${CMAKE_COMMAND} -E copy ${METIS_InstallDir}/src/ext-Metis/libmetis.a   ${ext-InstallDir}/lib
-            && ${CMAKE_COMMAND} -E copy ${METIS_InstallDir}/src/ext-Metis/Lib/macros.h ${ext-InstallDir}/include/metis/
-            && ${CMAKE_COMMAND} -E copy ${METIS_InstallDir}/src/ext-Metis/Lib/struct.h ${ext-InstallDir}/include/metis/
-            && ${CMAKE_COMMAND} -E copy ${METIS_InstallDir}/src/ext-Metis/Lib/proto.h  ${ext-InstallDir}/include/metis/
-            && ${CMAKE_COMMAND} -E copy ${METIS_InstallDir}/src/ext-Metis/Lib/metis.h  ${ext-InstallDir}/include/metis/
-            && ${CMAKE_COMMAND} -E copy ${METIS_InstallDir}/src/ext-Metis/Lib/defs.h   ${ext-InstallDir}/include/metis/
-            && ${CMAKE_COMMAND} -E copy ${METIS_InstallDir}/src/ext-Metis/Lib/rename.h ${ext-InstallDir}/include/metis/
-            )
-endif ()
+if(COIN_USE_SYSTEM_LAPACK)
+    find_package(LAPACK REQUIRED)
+    set(LAPACK_TARGET LAPACK::LAPACK)
+else()
+    # Assume you vendor Lapack elsewhere and expose it as ext-Lapack
+    set(LAPACK_TARGET ext-Lapack)
+endif()
 
-# #################################################
-# <=== Metis compilation
-# #################################################
-
-# #################################################
-# ===> Mumps compilation
-# #################################################
-
-# TODO: Modern CMake (≥ 3.12 - 3.15) encourages FetchContent combined with add_subdirectory so dependencies
-#       become real CMake targets, with proper include directories and link information.
-#    => refactor this
+# ============================================================
+# ===> MUMPS via FetchContent
+# ============================================================
 
 if (COIN_ENABLE_DOWNLOAD_MUMPS)
     set(MUMPS_VERSION "5.8.1")
-    set(COIN_HAS_MUMPS  ON CACHE BOOL "Clp uses the MUMPS linear solver" FORCE)
-    set(IPOPT_HAS_MUMPS ON CACHE BOOL "Enable Mumps solver" FORCE)
+    set(MUMPS_URL "https://mumps-solver.org/MUMPS_${MUMPS_VERSION}.tar.gz")
 
-    set(MUMPS_DEPENDS "")
+    FetchContent_Declare(
+        Mumps
+        URL ${MUMPS_URL}
+    )
 
-    include(FindCheckMetis.cmake)
-    find_or_check_metis(MUMPS_USE_METIS)
+    FetchContent_GetProperties(Mumps)
+    if(NOT mumps_POPULATED)
+        FetchContent_Populate(Mumps)
 
-    if (COIN_ENABLE_DOWNLOAD_CLAPACK OR COIN_ENABLE_DOWNLOAD_LAPACK)
-        set(MUMPS_DEPENDS ${MUMPS_DEPENDS} ext-Lapack)
-    endif ()
-    if (COIN_ENABLE_DOWNLOAD_METIS)
-        set(MUMPS_DEPENDS ${MUMPS_DEPENDS} ext-Metis)
-    endif ()
+        # Copy our patched build system into the source dir
+        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists_mumps.cmake
+             DESTINATION ${mumps_SOURCE_DIR})
+        file(RENAME ${mumps_SOURCE_DIR}/CMakeLists_mumps.cmake
+             ${mumps_SOURCE_DIR}/CMakeLists.txt)
 
-    set(MUMPS_URL "https://mumps-solver.org/MUMPS_${MUMPS_VERSION}.tar.gz" CACHE STRING "URL to MUMPS_${MUMPS_VERSION}.tar.gz source archive")
-    set(MUMPS_InstallDir "${ext-InstallDir}/Mumps-${MUMPS_VERSION}/${CMAKE_CFG_INTDIR}/")
+        # Now MUMPS looks like a real CMake project
+        add_subdirectory(${mumps_SOURCE_DIR} ${mumps_BINARY_DIR})
+    endif()
+endif()
 
-    if (COIN_USE_SYSTEM_LAPACK)
-        set(MUMPS_LAPACK_PATH "${LAPACK_LINK_PATH}")
-    else ()
-        set(MUMPS_LAPACK_PATH "${ext-InstallDir}/lib")
-    endif ()
 
-    # TODO: we need to add the path to mumps_mpi.h once Mumps is patched ...
-    ExternalProject_Add(ext-Mumps
-            PREFIX            ${MUMPS_InstallDir}
-            DEPENDS           ${MUMPS_DEPENDS}
-            URL               ${MUMPS_URL}
-            UPDATE_COMMAND    ""
-            PATCH_COMMAND     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists_mumps.cmake ${MUMPS_InstallDir}/src/ext-Mumps/CMakeLists.txt
-            #		                     && ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps ${PATCH_EXECUTABLE} -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/mumps_mpi.patch
-            #		                     && ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps ${PATCH_EXECUTABLE} -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/mumps.patch
-            CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${MUMPS_InstallDir}/src/ext-Mumps/build
-            && ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps/build ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${ext-InstallDir} -DMUMPS_USE_LIBSEQ=ON -DMUMPS_USE_METIS=${MUMPS_USE_METIS} -DMUMPS_LAPACK_LIB_PATH:Path=${MUMPS_LAPACK_PATH} -DMUMPS_METIS_LIB_PATH:Path=${MUMPS_METIS_LIB_PATH} -DMUMPS_METIS_INC_PATH:Path=${MUMPS_METIS_INC_PATH} -DMUMPS_INSTALL_COIN=ON -DMUMPS_USE_F2C=${COIN_ENABLE_DOWNLOAD_CLAPACK} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -G ${CMAKE_GENERATOR} ..
-            BUILD_COMMAND     ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps/build ${CMAKE_MAKE_PROGRAM} -j 16
-            INSTALL_COMMAND   ${CMAKE_COMMAND} -E chdir ${MUMPS_InstallDir}/src/ext-Mumps/build ${CMAKE_MAKE_PROGRAM} install
-            )
-endif ()
-# #################################################
-# <=== Mumps compilation
-# #################################################
+# ============================================================
+# ===> Linking
+# ============================================================
+# Inside CMakeLists_mumps.cmake you can now simply do:
+#
+# add_library(mumps ...)
+# target_link_libraries(mumps
+#     PRIVATE
+#         ${LAPACK_TARGET}
+# )
+#
+# if(MUMPS_USE_METIS)
+#     target_link_libraries(mumps PRIVATE METIS::METIS)
+# endif()
+#
+# Everything propagates automatically (include dirs, libs, etc).
+
 
 # #################################################
 # ===> ASL compilation
@@ -372,7 +369,7 @@ if ((COIN_ENABLE_COMPILE_HSL OR COIN_USE_COINHSL) AND NOT COIN_HSL_PATH STREQUAL
     set(COIN_HAS_HSL ON CACHE BOOL "Enable the HSL support" FORCE)
     set(COIN_HAS_HSL_OTHER OFF CACHE BOOL "Enable the non local solver HSL support" FORCE)
 
-    set(COINHSL_HAS_METIS  "${COIN_ENABLE_DOWNLOAD_METIS}")
+    set(COINHSL_HAS_METIS  "${MUMPS_HAS_METIS}") # TODO: fuxme
     set(COINHSL_HSL2013    OFF)
     set(COIN_HAS_HSL_OTHER OFF)
 
@@ -578,10 +575,7 @@ macro(add_library_mod _target)
     add_library (${_target} ${ARGN})
 
     if (COIN_ENABLE_DOWNLOAD_MUMPS)
-        add_dependencies(${_target} ext-Mumps)
-    endif ()
-    if (COIN_ENABLE_DOWNLOAD_METIS)
-        add_dependencies(${_target} ext-Metis)
+        add_dependencies(${_target} dmumps)
     endif ()
     if (COIN_ENABLE_DOWNLOAD_ASL)
         add_dependencies(${_target} ext-ASL)
@@ -595,10 +589,7 @@ macro(add_executable_mod _target)
     add_executable (${_target} ${ARGN})
 
     if (COIN_ENABLE_DOWNLOAD_MUMPS)
-        add_dependencies(${_target} ext-Mumps)
-    endif ()
-    if (COIN_ENABLE_DOWNLOAD_METIS)
-        add_dependencies(${_target} ext-Metis)
+        add_dependencies(${_target} dmumps)
     endif ()
     if (COIN_ENABLE_DOWNLOAD_ASL)
         add_dependencies(${_target} ext-ASL)

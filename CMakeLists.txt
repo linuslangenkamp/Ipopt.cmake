@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 cmake_policy(SET CMP0075 NEW)
 project(Ipopt)
 
@@ -27,7 +27,7 @@ option(IPOPT_ENABLE_INEXACT             "Build the inexact solver" OFF)
 set(COIN_IPOPT_CHECKLEVEL "0" CACHE STRING "The debug sanity check level of Ipopt (0 if no test)")
 set(COIN_IPOPT_VERBOSITY  "0" CACHE STRING "The debug verbosity level of Ipopt (0 if no output)")
 
-set(COIN_HAS_MUMPS OFF CACHE BOOL "Enable the Mumps linear solver (default solver enabled)" FORCE)
+set(COIN_HAS_MUMPS ON CACHE BOOL "Enable the Mumps linear solver (default solver enabled)" FORCE)
 set(COIN_HAS_MUMPS_INCLUDE_PATH "None" CACHE PATH "The MUMPS linear solver include Path")
 set(COIN_HAS_MUMPS_LIBRARY_PATH "None" CACHE PATH "The MUMPS linear solver absolute library Path")
 
@@ -51,7 +51,6 @@ option(COIN_ENABLE_DOXYGEN           "Enable the build of doxygen documentation"
 
 # options from ThirdParty/CMakeLists.txt
 option(COIN_ENABLE_DOWNLOAD_MUMPS        "Enable the download / compilation of Mumps" ON)
-option(COIN_ENABLE_DOWNLOAD_METIS        "Enable the download / compilation of Metis" OFF)
 option(COIN_ENABLE_DOWNLOAD_ASL          "Enable the download / compilation of Ampl Solver Library" OFF)
 option(COIN_ENABLE_DOWNLOAD_MINGW_LAPACK "Enable the download / compilation of MinGW compiled Blas / Lapack" OFF)
 option(COIN_ENABLE_DOWNLOAD_LAPACK       "Enable the download / compilation of Blas / Lapack" OFF)
@@ -69,10 +68,13 @@ option(USE_PROCESSOR_EXTENSIONS      "Use sse / mmx / avx extensions during comp
 option(COIN_ENABLE_COMPAT            "Enable libc compatibility" OFF)   # Do not compile if ON
 
 # MUMPS build options
-option(MUMPS_USE_LIBSEQ   "Use the MUMPS sequential MPI stub" ON)
-option(MUMPS_USE_METIS    "Use the Metis library"             ON)
-option(MUMPS_USE_F2C      "F2c was used to compiled CLapack"  OFF)
-option(MUMPS_INSTALL_COIN "Install MUMPS for CoinOR"          ON)
+option(MUMPS_USE_LIBSEQ     "Use the MUMPS sequential MPI stub" ON)
+option(MUMPS_USE_METIS      "Use the Metis library"             ON)
+option(MUMPS_USE_F2C        "F2c was used to compiled CLapack"  OFF)
+option(MUMPS_INSTALL_COIN   "Install MUMPS for CoinOR"          ON)
+
+set(METIS_LIB_PATH "" CACHE STRING "Path to libmetis (file) or directory containing libmetis")
+set(METIS_INC_PATH "" CACHE PATH   "Path to METIS include directory (contains metis.h)")
 
 # Set paths of source
 set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Ipopt/sources/)
@@ -198,6 +200,11 @@ if (USE_PROCESSOR_EXTENSIONS)
         set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${SSE_COMPILER_FLAGS}")
     endif ()
 endif ()
+
+if (MUMPS_USE_METIS)
+    # we need to search for METIS to define the target METIS::METIS -> override paths later if needed
+    find_package(METIS)
+endif()
 
 # Check for MKL
 if (COIN_HAS_MKL)
@@ -664,7 +671,7 @@ link_directories(${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/lib
 # HSL Management
 #
 
-if (COIN_ENABLE_DOWNLOAD_METIS) # METIS found
+if (MUMPS_USE_METIS) # METIS found
     add_definitions(-DCOINHSL_HAS_METIS)
 endif ()
 
