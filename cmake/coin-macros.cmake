@@ -63,8 +63,6 @@ endmacro()
 # macros for tests
 #
 
-find_package(PythonInterp REQUIRED)
-
 set(COIN_TEST_LOG_DIR  "${CMAKE_BINARY_DIR}/tests" CACHE PATH "The log and output directory for tests")
 
 mark_as_advanced(COIN_TEST_LOG_DIR)

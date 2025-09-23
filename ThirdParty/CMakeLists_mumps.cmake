@@ -42,12 +42,7 @@ if (NOT MUMPS_USE_LIBSEQ AND NOT MPI_FOUND)
 endif ()
 
 if (NOT MUMPS_USE_LIBSEQ)
-  if (WIN32)
-    add_definitions("/Dpord")
-    add_definitions("/DOMPI_IMPORTS /DOPAL_IMPORTS /DORTEIMPORTS")
-  else ()
-    add_definitions("-Dpord")
-  endif ()
+  add_definitions("-Dpord")
 endif ()
 
 #------------------------------------------------------------
@@ -635,12 +630,12 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -DAdd_")
 
 if (BLAS_FOUND)
     set(LINK_LIBS ${LINK_LIBS}
-                    blas)
+                    BLAS::BLAS)
 endif ()
 
 if (LAPACK_FOUND)
     set(LINK_LIBS ${LINK_LIBS}
-                    lapack)
+                    LAPACK::LAPACK)
 endif ()
 
 if (WIN32)

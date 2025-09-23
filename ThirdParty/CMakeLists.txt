@@ -263,6 +263,10 @@ endif()
 
 include(FetchContent)
 
+if (POLICY CMP0169)
+    cmake_policy(SET CMP0169 OLD) # needed for non-deprecated single arg FetchContent_Populate
+endif ()
+
 if (COIN_ENABLE_DOWNLOAD_MUMPS)
     set(MUMPS_VERSION "5.8.1")
     set(MUMPS_URL "https://mumps-solver.org/MUMPS_${MUMPS_VERSION}.tar.gz")
@@ -270,11 +274,12 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
     FetchContent_Declare(
         Mumps
         URL ${MUMPS_URL}
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
 
     FetchContent_GetProperties(Mumps)
     if(NOT mumps_POPULATED)
-        FetchContent_MakeAvailable(Mumps)
+        FetchContent_Populate(Mumps)
 
         file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists_mumps.cmake
              DESTINATION ${mumps_SOURCE_DIR})
