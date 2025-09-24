@@ -6,8 +6,6 @@ project(Ipopt)
 
 #undef HAVE_MPI_INITIALIZED - Define to 1 if you have the `MPI_Initialized' function.
 
-option(COIN_ENABLE_READLINE "Enable the use of the readline library" OFF)
-
 option(IPOPT_HAS_AMPL                   "Enable Ampl interface" OFF)
 option(IPOPT_HAS_PARDISO                "Enable Pardiso solver" OFF)
 option(IPOPT_HAS_PARDISO_MKL            "Enable if you are using Pardiso from MKL" OFF)
@@ -77,7 +75,6 @@ set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Ipopt/sources/)
 set(COIN_COVERAGE_CTEST_LABEL "SAMPLE" CACHE PATH "The label sent to ctest during coverage")
 
 mark_as_advanced(ENABLE_SHARED_LIBRARIES
-        COIN_ENABLE_READLINE
         COIN_COMPILE_STATIC
         COIN_COMPILE_COVERAGE
         COIN_COMPILE_PROFILE
@@ -172,17 +169,6 @@ if (UNIX AND COIN_ENABLE_COMPAT)
     check_c_compiler_flag("-Wa,-mrelax-relocations=no" HAVE_RELAX_RELOC_FLAG)
     if (HAVE_RELAX_RELOC_FLAG)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wa,-mrelax-relocations=no")
-    endif ()
-endif ()
-
-# Check for readline
-set(COIN_HAS_READLINE "OFF")
-if (COIN_ENABLE_READLINE)
-    find_package(Readline)
-    if (READLINE_FOUND)
-        set(COIN_HAS_READLINE "ON")
-
-        include_directories(${READLINE_INCLUDE_DIR})
     endif ()
 endif ()
 
@@ -293,9 +279,6 @@ check_include_file("ieeefp.h"    HAVE_IEEEFP_H)
 check_include_file("inttypes.h"  HAVE_INTTYPES_H)
 check_include_file("math.h"      HAVE_MATH_H)
 check_include_file("memory.h"    HAVE_MEMORY_H)
-if (COIN_ENABLE_READLINE)
-    check_include_file("readline/readline.h" HAVE_READLINE_READLINE_H)
-endif ()
 check_include_file("stdint.h"    HAVE_STDINT_H)
 check_include_file("stdlib.h"    HAVE_STDLIB_H)
 check_include_file("stdio.h"     HAVE_STDIO_H)

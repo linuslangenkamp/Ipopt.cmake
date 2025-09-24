@@ -29,8 +29,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config_ipopt.h.in ${CMAKE_BIN
 # pkg-config file generation
 #
 
-# TODO: needed?
-
 set(prefix               "${CMAKE_INSTALL_PREFIX}")
 set(exec_prefix          "\${prefix}")
 set(libdir               "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
