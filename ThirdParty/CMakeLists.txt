@@ -72,6 +72,9 @@ endif ()
 # <===    System Lapack
 # #################################################
 
+# TODO: add HSL   from source build?
+# TODO: add METIS from source build?
+
 include(FetchContent)
 
 if (POLICY CMP0169)
@@ -94,7 +97,7 @@ if(COIN_ENABLE_DOWNLOAD_LAPACK)
     set(BUILD_SHARED_LIBS   ON  CACHE BOOL "Build shared libraries for OpenBLAS" FORCE)
     set(BUILD_TESTING       OFF CACHE BOOL "Build testing for OpenBLAS" FORCE)
 
-    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU")
         set(CMAKE_C_FLAGS       "${CMAKE_C_FLAGS} -w")
         set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -w")
         set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -w")
@@ -113,7 +116,7 @@ if(COIN_ENABLE_DOWNLOAD_LAPACK)
     )
 
     FetchContent_MakeAvailable(OpenBLAS)
-    target_link_libraries(LAPACK_TARGET INTERFACE LAPACK::openblas_shared)
+    target_link_libraries(LAPACK_TARGET INTERFACE openblas_shared)
 
     restore_tmp(BUILD_SHARED_LIBS   _TMP_BUILD_SHARED_LIBS)
     restore_tmp(BUILD_TESTING       _TMP_BUILD_TESTING)

@@ -527,6 +527,8 @@ set(FORTRAN_INTEGER_TYPE int)
 # Detect name mangling convention used between Fortran and C
 #-----------------------------------------------------------------------------
 
+# TODO: this fails for flang with gcc & g++
+
 if (CMAKE_Fortran_COMPILER)
     enable_language(Fortran)
 

@@ -9,7 +9,7 @@ set(MUMPS_LAPACK_LIB_PATH "None" CACHE PATH "The Lapack library library Path")
 
 message(STATUS "Building MUMPS with METIS: ${MUMPS_USE_METIS}")
 
-set(INCLUDEDIR ${mumps_SOURCE_DIR}/include)
+set(INCLUDEDIR ${CMAKE_BINARY_DIR}/MUMPS/include)
 
 include(GNUInstallDirs)
 
@@ -96,7 +96,6 @@ else ()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/mumps_int_def32_h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/mumps_int_def.h)
 endif ()
 
-include_directories(${CMAKE_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
@@ -619,13 +618,13 @@ set(MUMPS_Z_SRCS src/mumps_c.c
                 src/ztools.F
                 src/ztype3_root.F)
 
-#if (WIN32)
-  #set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} /fpp /nologo /reentrancy /fixed /warn:noalignments /Qsave /Qzero /libs:static /threads /traceback /D_CRT_SECURE_NO_WARNINGS /DALLOW_NON_INIT /Dintel_ ")
-  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /nologo /D_CRT_SECURE_NO_WARNINGS /DAdd_ ")
-#else ()
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -w -fcray-pointer -fallow-argument-mismatch -fall-intrinsics -finit-local-zero -DALLOW_NON_INIT -Dintel_ ")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w -DAdd_")
-#endif ()
+if ("${CMAKE_Fortran_COMPILER_ID}" MATCHES "GNU")
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -w -fcray-pointer -fallow-argument-mismatch -fall-intrinsics -finit-local-zero")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
+endif ()
+
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -DALLOW_NON_INIT -Dintel_ ")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DAdd_")
 
 set(LINK_LIBS ${LINK_LIBS} LAPACK_TARGET)
 
@@ -689,17 +688,10 @@ target_link_libraries(dmumps mumps_common ${LINK_LIBS})
 # add_library(zmumps STATIC ${MUMPS_Z_SRCS})
 # target_link_libraries(zmumps mumps_common)
 
-#if (WIN32)
-#  #set_property(TARGET libsmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_s")
-#  set_property(TARGET libdmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_d")
-#  #set_property(TARGET libcmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_c")
-#  #set_property(TARGET libzmumps PROPERTY COMPILE_FLAGS "/DMUMPS_ARITH=MUMPS_ARITH_z")
-#else ()
-  #set_property(TARGET libsmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_s")
-  set_property(TARGET dmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_d")
-  #set_property(TARGET libcmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_c")
-  #set_property(TARGET libzmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_z")
-#endif ()
+#set_property(TARGET libsmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_s")
+set_property(TARGET dmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_d")
+#set_property(TARGET libcmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_c")
+#set_property(TARGET libzmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_z")
 
 add_executable(dsimple_test examples/dsimpletest.F)
 target_link_libraries(dsimple_test dmumps mumps_common ${LINK_LIBS})
