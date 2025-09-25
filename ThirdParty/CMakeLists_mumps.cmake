@@ -107,6 +107,10 @@ if (MUMPS_USE_LIBSEQ)
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libseq)
 endif ()
 
+if (MUMPS_USE_METIS)
+  include_directories(${METIS_INCLUDE_DIR})
+endif ()
+
 if (MKL_FOUND)
   link_directories(${MKL_PATH})
 endif ()
