@@ -77,10 +77,6 @@ endif ()
 
 include(FetchContent)
 
-if (POLICY CMP0169)
-    cmake_policy(SET CMP0169 OLD) # needed for non-deprecated single arg FetchContent_Populate
-endif ()
-
 # #################################################
 # ===>    Lapack
 # #################################################
@@ -147,17 +143,12 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
         Mumps
         URL ${MUMPS_URL}
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists_mumps.cmake CMakeLists.txt
     )
 
     FetchContent_GetProperties(Mumps)
     if(NOT mumps_POPULATED)
         FetchContent_Populate(Mumps)
-
-        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists_mumps.cmake
-             DESTINATION ${mumps_SOURCE_DIR})
-        file(RENAME ${mumps_SOURCE_DIR}/CMakeLists_mumps.cmake
-             ${mumps_SOURCE_DIR}/CMakeLists.txt)
-
         add_subdirectory(${mumps_SOURCE_DIR} ${mumps_BINARY_DIR})
     endif()
 endif()

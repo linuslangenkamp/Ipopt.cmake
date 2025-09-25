@@ -253,12 +253,6 @@ if (IPOPT_ENABLE_INEXACT)
             ${IPOPT_SRC_ALGORITHM_INEXACT_LIST})
 endif ()
 
-macro(set_ipopt_include_directories TARGET)
-    target_include_directories(${TARGET} BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
-    target_include_directories(${TARGET} BEFORE PRIVATE ${CMAKE_BINARY_DIR}/_deps/mumps-src/include)
-    target_include_directories(${TARGET} BEFORE PRIVATE ${CMAKE_BINARY_DIR}/_deps/mumps-src/libseq)
-endmacro ()
-
 if (EXISTS ${Ipopt_DIR}/ThirdParty/HSL)
     include_directories(${Ipopt_DIR}/ThirdParty/HSL)
 endif ()
@@ -314,7 +308,7 @@ if (COIN_COMPILE_LTO)
     set_target_properties(ipopt PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
 endif ()
 
-set_ipopt_include_directories(ipopt)
+target_include_directories(ipopt BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
 
 if (IPOPT_HAS_AMPL)
     set (IPOPT_AMPL_SRC_LIST ${Ipopt_DIR}/src/Apps/AmplSolver/ampl_ipopt.cpp)
@@ -429,7 +423,7 @@ if (IPOPT_BUILD_EXAMPLES)
         target_link_libraries(solve_problem dl)
     endif ()
     include_directories(${Ipopt_DIR}/examples/ScalableProblems)
-    set_ipopt_include_directories(solve_problem)
+    target_include_directories(solve_problem BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
 
     add_test(NAME ipopt_example_luksan_LukVlE1
             COMMAND $<TARGET_FILE:solve_problem> LukVlE1 10)
@@ -659,7 +653,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (UNIX)
         target_link_libraries(cpp_example m)
     endif ()
-    set_ipopt_include_directories(cpp_example)
+    target_include_directories(cpp_example BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
 
     add_test(NAME ipopt_example_cpp_example
             COMMAND $<TARGET_FILE:cpp_example>)
@@ -694,7 +688,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (UNIX)
         target_link_libraries(hs071_c m)
     endif ()
-    set_ipopt_include_directories(hs071_c)
+    target_include_directories(hs071_c BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
 
     add_test(NAME ipopt_example_hs071_c
             COMMAND $<TARGET_FILE:hs071_c>)
@@ -730,7 +724,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (UNIX)
         target_link_libraries(hs071_cpp m)
     endif ()
-    set_ipopt_include_directories(hs071_cpp)
+    target_include_directories(hs071_cpp BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
 
     add_test(NAME ipopt_example_hs071_cpp
             COMMAND $<TARGET_FILE:hs071_cpp>)

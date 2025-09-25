@@ -685,6 +685,8 @@ add_library(mumps_common STATIC ${MUMPS_COMMON_SRCS})
 
 add_library(dmumps STATIC ${MUMPS_D_SRCS})
 target_link_libraries(dmumps mumps_common ${LINK_LIBS})
+target_include_directories(dmumps PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(dmumps PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libseq)
 
 # add_library(cmumps STATIC ${MUMPS_C_SRCS})
 # target_link_libraries(cmumps mumps_common)
