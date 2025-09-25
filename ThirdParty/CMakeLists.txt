@@ -37,15 +37,6 @@ endif ()
 
 set(CMAKE_GENERATOR_OLD    "${CMAKE_GENERATOR}")
 set(CMAKE_MAKE_PROGRAM_OLD "${CMAKE_MAKE_PROGRAM}")
-#if (WIN32)
-#    set(CMAKE_GENERATOR    "MSYS Makefiles")
-#    set(CMAKE_MAKE_PROGRAM "make")
-#    set(CMAKE_OPT          "-j 16")
-#else ()
-#    set(CMAKE_GENERATOR    "Unix Makefiles")
-#    set(CMAKE_MAKE_PROGRAM "make")
-#    set(CMAKE_OPT          "-j 16")
-#endif ()
 
 if (NOT COIN_ENABLE_DOWNLOAD_MINGW_LAPACK AND
         NOT COIN_ENABLE_DOWNLOAD_LAPACK AND
