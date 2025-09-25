@@ -43,8 +43,6 @@ set(IPOPT_VERBOSITY  "0" CACHE STRING "The debug verbosity level of Ipopt (0 if 
 option(ENABLE_SHARED_LIBRARIES       "Build libraries as shared libraries" OFF)
 option(COIN_COMPILE_STATIC           "Activate the static linking" ON)
 option(COIN_COMPILE_COVERAGE         "Activate the code coverage compilation" OFF)
-option(COIN_COMPILE_PROFILE          "Activate the code profiling compilation" OFF)
-option(COIN_COMPILE_PROFILE_VALGRIND "Activate the code profiling compilation for valgrind" OFF)
 option(COIN_COMPILE_LTO              "Activate the whole program optimization" OFF)  # GCC macOS does not support this
 option(COIN_HAS_MKL                  "Use Intel MKL library (requires Intel compiler)" OFF)
 option(COIN_USE_FAST_CODE            "Use intensive optimization flags" ON)
@@ -57,8 +55,6 @@ set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Ipopt/sources/)
 mark_as_advanced(ENABLE_SHARED_LIBRARIES
         COIN_COMPILE_STATIC
         COIN_COMPILE_COVERAGE
-        COIN_COMPILE_PROFILE
-        COIN_COMPILE_PROFILE_VALGRIND
         COIN_COMPILE_LTO
         COIN_HAS_MKL
         COIN_USE_FAST_CODE
@@ -407,14 +403,6 @@ if (UNIX)
         if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version='408*'")
         endif ()
-    endif ()
-    if (COIN_COMPILE_PROFILE)
-        set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -pg")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
-    endif ()
-    if (COIN_COMPILE_PROFILE_VALGRIND)
-        set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -p")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -p")
     endif ()
 endif ()
 
