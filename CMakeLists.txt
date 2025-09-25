@@ -21,16 +21,24 @@ option(IPOPT_HAS_LINEARSOLVERLOADER     "Build the dynamic linear solver loader"
 option(IPOPT_ENABLE_PARDISOSOLVERLOADER "Build the dynamic pardiso solver loader" OFF)
 option(IPOPT_ENABLE_INEXACT             "Build the inexact solver" OFF)
 
+# options from ThirdParty/CMakeLists.txt
+option(DOWNLOAD_MUMPS               "Enable the download / compilation of Mumps" ON)
+option(DOWNLOAD_LAPACK              "Enable the download / compilation of Blas / Lapack" OFF)
+option(USE_SYSTEM_LAPACK            "Enable the use of the system Lapack" ON)
+option(USE_PROCESSOR_EXTENSIONS      "Use sse / mmx / avx extensions during compilation" OFF)
+option(COIN_ENABLE_COMPAT            "Enable libc compatibility" OFF)   # Do not compile if ON
+
+# MUMPS build options
+option(MUMPS_USE_LIBSEQ     "Use the MUMPS sequential MPI stub" ON)
+option(MUMPS_USE_METIS      "Use the Metis library"             ON)
+option(MUMPS_INSTALL_COIN   "Install MUMPS for CoinOR"          ON) # TODO: what is this??
+
+set(METIS_LIB_PATH "" CACHE STRING "Path to libmetis (file) or directory containing libmetis")
+set(METIS_INC_PATH "" CACHE PATH   "Path to METIS include directory (contains metis.h)")
+
+# other options
 set(COIN_IPOPT_CHECKLEVEL "0" CACHE STRING "The debug sanity check level of Ipopt (0 if no test)")
 set(COIN_IPOPT_VERBOSITY  "0" CACHE STRING "The debug verbosity level of Ipopt (0 if no output)")
-
-set(COIN_HAS_MUMPS ON CACHE BOOL "Enable the Mumps linear solver (default solver enabled)" FORCE)
-set(COIN_HAS_MUMPS_INCLUDE_PATH "None" CACHE PATH "The MUMPS linear solver include Path")
-set(COIN_HAS_MUMPS_LIBRARY_PATH "None" CACHE PATH "The MUMPS linear solver absolute library Path")
-
-set(COIN_HAS_WSMP OFF CACHE BOOL "Enable the WSMP linear solver" FORCE)
-set(COIN_HAS_WSMP_INCLUDE_PATH "None" CACHE PATH "The WSMP linear solver include Path")
-set(COIN_HAS_WSMP_LIBRARY_PATH "None" CACHE PATH "The WSMP linear solver absolute library Path")
 
 # Compilation options
 option(ENABLE_SHARED_LIBRARIES       "Build libraries as shared libraries" OFF)
@@ -41,36 +49,11 @@ option(COIN_COMPILE_PROFILE_VALGRIND "Activate the code profiling compilation fo
 option(COIN_COMPILE_LTO              "Activate the whole program optimization" OFF)  # GCC macOS does not support this
 option(COIN_HAS_MKL                  "Use Intel MKL library (requires Intel compiler)" OFF)
 option(COIN_USE_FAST_CODE            "Use intensive optimization flags" ON)
-option(COIN_COMPILE_WARNINGS         "Activate a set of warning options" OFF)
-option(COIN_COMPILE_CXX11            "Activate C++11 compilation" ON)
 option(COIN_TESTS_DISABLE_TIMEOUT    "Disable the timeout of the tests" OFF)
 option(COIN_ENABLE_DOXYGEN           "Enable the build of doxygen documentation" OFF)
 
-# options from ThirdParty/CMakeLists.txt
-option(COIN_ENABLE_DOWNLOAD_MUMPS        "Enable the download / compilation of Mumps" ON)
-option(COIN_ENABLE_DOWNLOAD_MINGW_LAPACK "Enable the download / compilation of MinGW compiled Blas / Lapack" OFF)
-option(COIN_ENABLE_DOWNLOAD_LAPACK       "Enable the download / compilation of Blas / Lapack" OFF)
-option(COIN_ENABLE_DOWNLOAD_MINLPLIB     "Enable the download / run of minlp benchmark" OFF)
-option(COIN_USE_SYSTEM_LAPACK            "Enable the use of the system Lapack" ON)
-option(COIN_DISABLE_THIRDPARTY           "Disable the build of the dependencies" OFF)
-if (WIN32)
-    option(COIN_ENABLE_DOWNLOAD_PATCH      "Enable the download / use of Patch exe (for Windows)" OFF)
-endif ()
-
-option(USE_PROCESSOR_EXTENSIONS      "Use sse / mmx / avx extensions during compilation" OFF)
-option(COIN_ENABLE_COMPAT            "Enable libc compatibility" OFF)   # Do not compile if ON
-
-# MUMPS build options
-option(MUMPS_USE_LIBSEQ     "Use the MUMPS sequential MPI stub" ON)
-option(MUMPS_USE_METIS      "Use the Metis library"             ON)
-option(MUMPS_INSTALL_COIN   "Install MUMPS for CoinOR"          ON)
-
-set(METIS_LIB_PATH "" CACHE STRING "Path to libmetis (file) or directory containing libmetis")
-set(METIS_INC_PATH "" CACHE PATH   "Path to METIS include directory (contains metis.h)")
-
 # Set paths of source
 set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Ipopt/sources/)
-set(COIN_COVERAGE_CTEST_LABEL "SAMPLE" CACHE PATH "The label sent to ctest during coverage")
 
 mark_as_advanced(ENABLE_SHARED_LIBRARIES
         COIN_COMPILE_STATIC
@@ -80,21 +63,12 @@ mark_as_advanced(ENABLE_SHARED_LIBRARIES
         COIN_COMPILE_LTO
         COIN_HAS_MKL
         COIN_USE_FAST_CODE
-        COIN_COMPILE_WARNINGS
-        COIN_COMPILE_CXX11
-        COIN_HAS_MUMPS
-        COIN_HAS_MUMPS_INCLUDE_PATH
-        COIN_HAS_MUMPS_LIBRARY_PATH
-        COIN_HAS_WSMP
-        COIN_HAS_WSMP_INCLUDE_PATH
-        COIN_HAS_WSMP_LIBRARY_PATH
         IPOPT_HAS_PARDISO_MKL
         IPOPT_HAS_PARDISO_OLDINTERFACE
         IPOPT_HAS_PARDISO_PARALLEL
         COIN_IPOPT_CHECKLEVEL
         COIN_IPOPT_VERBOSITY
-        USE_PROCESSOR_EXTENSIONS
-        COIN_COVERAGE_CTEST_LABEL)
+        USE_PROCESSOR_EXTENSIONS)
 
 # Set paths for binary and library generation inside the build directory:
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -248,7 +222,7 @@ endif ()
 # Dependencies
 #-----------------------------------------------------------------------------
 
-if (COIN_USE_SYSTEM_LAPACK AND NOT COIN_ENABLE_DOWNLOAD_LAPACK)
+if (USE_SYSTEM_LAPACK AND NOT DOWNLOAD_LAPACK)
     find_package(LAPACK REQUIRED)
 endif ()
 
@@ -296,19 +270,6 @@ check_include_file_cxx("ctime"     HAVE_CTIME)
 string(SUBSTRING ${CMAKE_SHARED_LIBRARY_SUFFIX} 1 -1 SHAREDLIBEXT)
 
 include(CheckCXXCompilerFlag)
-
-if (COIN_COMPILE_CXX11 AND NOT WIN32)
-    # VS2013 activate C++11 by default
-    check_cxx_compiler_flag(-std=c++11 HAVE_STD_CPP11_FLAG)
-    if (HAVE_STD_CPP11_FLAG)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    else ()
-        check_cxx_compiler_flag(-std=c++0x HAVE_STD_CPP0X_FLAG)
-        if (HAVE_STD_CPP0X_FLAG)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-        endif ()
-    endif ()
-endif ()
 
 check_cxx_compiler_flag(-Qunused-arguments HAVE_QUNUSED_ARGUMENTS)
 if (HAVE_QUNUSED_ARGUMENTS)
@@ -412,7 +373,7 @@ if (IPOPT_ENABLE_INEXACT)
     set(BUILD_INEXACT 1)
 endif ()
 
-if (COIN_HAS_LAPACK OR COIN_ENABLE_DOWNLOAD_LAPACK OR COIN_USE_SYSTEM_LAPACK)
+if (COIN_HAS_LAPACK OR DOWNLOAD_LAPACK OR USE_SYSTEM_LAPACK)
     set(IPOPT_HAS_LAPACK 1)
 endif ()
 
@@ -438,11 +399,6 @@ if (UNIX)
     if (NOT ENABLE_SHARED_LIBRARIES)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
         set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fPIC")
-    endif ()
-    if (COIN_COMPILE_WARNINGS)
-        # Try to locate unitizalized variables
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wshadow -Wuninitialized ")
-        set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wall -Wshadow -Wmissing-prototypes -Wuninitialized ")
     endif ()
     if (COIN_COMPILE_COVERAGE)
         if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -542,57 +498,6 @@ mark_as_advanced(F77_FUNC
         FC_DUMMY_MAIN
         FC_DUMMY_MAIN_EQ_F77)
 
-# Manage coverage via lcov automatically
-
-if (COIN_COMPILE_COVERAGE AND NOT ((CMAKE_BUILD_TYPE STREQUAL "DEBUG") OR (CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO")))
-    message(STATUS "Warning: to enable coverage, you must compile in DEBUG ou RELWITHDEBINFO mode")
-endif ()
-
-if (COIN_COMPILE_COVERAGE)
-    if (WIN32)
-        message(FATAL_ERROR "Error: code coverage analysis is only available under Linux for now.")
-    endif ()
-
-    find_program(GCOV_PATH gcov)
-    find_program(LCOV_PATH lcov)
-    find_program(GENHTML_PATH genhtml)
-
-    if (NOT GCOV_PATH)
-        message(FATAL_ERROR "gcov not found! Please install lcov and gcov. Aborting...")
-    endif ()
-
-    if (NOT LCOV_PATH)
-        message(FATAL_ERROR "lcov not found! Please install lcov and gcov. Aborting...")
-    endif ()
-
-    if (NOT GENHTML_PATH)
-        message(FATAL_ERROR "genhtml not found! Please install lcov and gcov. Aborting...")
-    endif ()
-
-    # /!\ FAILURE IF AT LEAST ONE TEST FAILS
-    # Capturing lcov counters and generating report
-    add_custom_target(coverage
-            COMMAND ${LCOV_PATH} --directory ${CMAKE_BINARY_DIR} --zerocounters
-            COMMAND ${LCOV_PATH} --capture --initial --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
-            COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_BINARY_DIR} ${CMAKE_CTEST_COMMAND} -LE "(LONG|FAIL)" -L "${COIN_COVERAGE_CTEST_LABEL}" || true
-            COMMAND ${LCOV_PATH} --capture --directory ${CMAKE_BINARY_DIR} --output-file ${CMAKE_BINARY_DIR}/coverage.info
-            COMMAND ${LCOV_PATH} --remove ${CMAKE_BINARY_DIR}/coverage.info "*/usr/include/*" '${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/*' --output-file ${CMAKE_BINARY_DIR}/coverage.info.cleaned
-            COMMAND ${GENHTML_PATH} -o ${CMAKE_BINARY_DIR}/coverage ${CMAKE_BINARY_DIR}/coverage.info.cleaned
-            COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/coverage.info ${CMAKE_BINARY_DIR}/coverage.info.cleaned
-            VERBATIM
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Resetting code coverage counters to zero.
-Processing code coverage counters and generating report.
-You can zip the directory ${CMAKE_BINARY_DIR}/coverage and upload the content to a web server.")
-endif ()
-
-#
-# Add uninstall-target
-#
-
-add_custom_target(uninstall
-        COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uninstall.cmake")
-
 # End of coverage
 
 if (COIN_USE_FAST_CODE)
@@ -638,9 +543,12 @@ add_subdirectory(ThirdParty)
 # HSL Management
 #
 
-if (MUMPS_USE_METIS)
-    add_definitions(-DCOINHSL_HAS_METIS)
-endif ()
+# TODO: add if we support HSL from source build
+#
+# if (HSL_HAS_METIS)
+#     add_definitions(-DCOINHSL_HAS_METIS)
+# endif ()
+#
 
 add_subdirectory(Ipopt)
 

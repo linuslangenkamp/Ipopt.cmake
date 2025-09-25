@@ -10,51 +10,24 @@ if (APPLE)
     set(CMAKE_CXX_ARCHIVE_FINISH "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
 endif()
 
-
-if (COIN_DISABLE_THIRDPARTY)
-    return ()
-endif ()
-
 # Prevent the "make clean" from cleaning this directory
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM TRUE)
 
-include(ExternalProject)
-
-set(ext-InstallDir ${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR})
-
-if (NOT EXISTS ${ext-InstallDir})
-    make_directory(${ext-InstallDir})
-endif ()
-if (NOT EXISTS ${ext-InstallDir}/bin)
-    make_directory(${ext-InstallDir}/bin)
-endif ()
-if (NOT EXISTS ${ext-InstallDir}/lib)
-    make_directory(${ext-InstallDir}/lib)
-endif ()
-if (NOT EXISTS ${ext-InstallDir}/include)
-    make_directory(${ext-InstallDir}/include)
-endif ()
-
-set(CMAKE_GENERATOR_OLD    "${CMAKE_GENERATOR}")
-set(CMAKE_MAKE_PROGRAM_OLD "${CMAKE_MAKE_PROGRAM}")
-
-if (NOT COIN_ENABLE_DOWNLOAD_MINGW_LAPACK AND
-        NOT COIN_ENABLE_DOWNLOAD_LAPACK AND
-        NOT COIN_USE_SYSTEM_LAPACK)
+if (NOT DOWNLOAD_LAPACK AND
+        NOT USE_SYSTEM_LAPACK)
     message(WARNING "One kind of Blas / Lapack can be selected:
- - COIN_ENABLE_DOWNLOAD_MINGW_LAPACK AND
- - COIN_ENABLE_DOWNLOAD_LAPACK AND
- - COIN_USE_SYSTEM_LAPACK")
+ - DOWNLOAD_LAPACK AND
+ - USE_SYSTEM_LAPACK")
 endif ()
 
 # #################################################
 # ===>    System Lapack
 # #################################################
 
-if (COIN_USE_SYSTEM_LAPACK)
+if (USE_SYSTEM_LAPACK)
     find_package(LAPACK REQUIRED)
 
-    set(COIN_ENABLE_DOWNLOAD_LAPACK  OFF CACHE BOOL "Enable the download / compilation of Blas / Lapack")
+    set(DOWNLOAD_LAPACK  OFF CACHE BOOL "Enable the download / compilation of Blas / Lapack")
 
     get_filename_component(LAPACK_LINK_PATH "${LAPACK_LIBRARIES}" DIRECTORY)
 endif ()
@@ -74,7 +47,7 @@ include(FetchContent)
 
 add_library(LAPACK_TARGET INTERFACE)
 
-if(COIN_ENABLE_DOWNLOAD_LAPACK)
+if(DOWNLOAD_LAPACK)
     safe_tmp(_TMP_BUILD_SHARED_LIBS BUILD_SHARED_LIBS)
     safe_tmp(_TMP_BUILD_TESTING     BUILD_TESTING)
     safe_tmp(_TMP_CFLAGS            CMAKE_C_FLAGS)
@@ -111,11 +84,11 @@ if(COIN_ENABLE_DOWNLOAD_LAPACK)
     restore_tmp(CMAKE_CXX_FLAGS     _TMP_CXXFLAGS)
     restore_tmp(CMAKE_Fortran_FLAGS _TMP_FortranFLAGS)
 
-elseif(COIN_USE_SYSTEM_LAPACK)
+elseif(USE_SYSTEM_LAPACK)
     find_package(LAPACK REQUIRED)
     target_link_libraries(LAPACK_TARGET INTERFACE LAPACK::LAPACK)
 else()
-    message(FATAL_ERROR "No LAPACK available, because COIN_USE_SYSTEM_LAPACK=OFF and COIN_ENABLE_DOWNLOAD_LAPACK=OFF.")
+    message(FATAL_ERROR "No LAPACK available, because USE_SYSTEM_LAPACK=OFF and DOWNLOAD_LAPACK=OFF.")
 endif()
 
 # #################################################
@@ -126,7 +99,7 @@ endif()
 # ===> MUMPS via FetchContent
 # ============================================================
 
-if (COIN_ENABLE_DOWNLOAD_MUMPS)
+if (DOWNLOAD_MUMPS)
     set(MUMPS_VERSION "5.8.1")
     set(MUMPS_URL "https://mumps-solver.org/MUMPS_${MUMPS_VERSION}.tar.gz")
 
@@ -143,9 +116,6 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
     endif()
 endif()
 
-set(CMAKE_GENERATOR    "${CMAKE_GENERATOR_OLD}")
-set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM_OLD}")
-
 # #################################################
 # ===>   Restart cmake
 # #################################################
@@ -154,24 +124,13 @@ set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM_OLD}")
 ## The original built-in commands are prefixed with an underscore if overriding any of them
 ## Prevent the modification of all sub-project
 
-macro(add_library_mod _target)
-    add_library (${_target} ${ARGN})
-
-    if (COIN_ENABLE_DOWNLOAD_MUMPS)
-        add_dependencies(${_target} dmumps)
-    endif ()
-    if (COIN_ENABLE_DOWNLOAD_LAPACK)
-        add_dependencies(${_target} LAPACK_TARGET)
-    endif ()
-endmacro ()
-
 macro(add_executable_mod _target)
     add_executable (${_target} ${ARGN})
 
-    if (COIN_ENABLE_DOWNLOAD_MUMPS)
+    if (DOWNLOAD_MUMPS)
         add_dependencies(${_target} dmumps)
     endif ()
-    if (COIN_ENABLE_DOWNLOAD_LAPACK)
+    if (DOWNLOAD_LAPACK)
         add_dependencies(${_target} LAPACK_TARGET)
     endif ()
 endmacro ()

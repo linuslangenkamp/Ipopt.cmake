@@ -79,7 +79,7 @@ else ()
 endif ()
 
 
-if (NOT LAPACK_FOUND AND NOT COIN_ENABLE_DOWNLOAD_LAPACK)
+if (NOT LAPACK_FOUND AND NOT DOWNLOAD_LAPACK)
   message(STATUS "Searching for LAPACK")
   find_package(LAPACK REQUIRED)
 endif ()
