@@ -35,9 +35,6 @@ if (NOT EXISTS ${ext-InstallDir}/include)
     make_directory(${ext-InstallDir}/include)
 endif ()
 
-set(CMAKE_GENERATOR_OLD    "${CMAKE_GENERATOR}")
-set(CMAKE_MAKE_PROGRAM_OLD "${CMAKE_MAKE_PROGRAM}")
-
 if (NOT COIN_ENABLE_DOWNLOAD_MINGW_LAPACK AND
         NOT COIN_ENABLE_DOWNLOAD_LAPACK AND
         NOT COIN_USE_SYSTEM_LAPACK)
@@ -64,9 +61,18 @@ endif ()
 # #################################################
 
 # TODO: add HSL   from source build?
-# TODO: add METIS from source build?
 
 include(FetchContent)
+
+safe_tmp(_TMP_CFLAGS            CMAKE_C_FLAGS)
+safe_tmp(_TMP_CXXFLAGS          CMAKE_CXX_FLAGS)
+safe_tmp(_TMP_FortranFLAGS      CMAKE_Fortran_FLAGS)
+
+if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+    set(CMAKE_C_FLAGS       "${CMAKE_C_FLAGS} -w")
+    set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -w")
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -w")
+endif()
 
 # #################################################
 # ===>    Lapack
@@ -77,18 +83,9 @@ add_library(LAPACK_TARGET INTERFACE)
 if(COIN_ENABLE_DOWNLOAD_LAPACK)
     safe_tmp(_TMP_BUILD_SHARED_LIBS BUILD_SHARED_LIBS)
     safe_tmp(_TMP_BUILD_TESTING     BUILD_TESTING)
-    safe_tmp(_TMP_CFLAGS            CMAKE_C_FLAGS)
-    safe_tmp(_TMP_CXXFLAGS          CMAKE_CXX_FLAGS)
-    safe_tmp(_TMP_FortranFLAGS      CMAKE_Fortran_FLAGS)
 
     set(BUILD_SHARED_LIBS   ON  CACHE BOOL "Build shared libraries for OpenBLAS" FORCE)
     set(BUILD_TESTING       OFF CACHE BOOL "Build testing for OpenBLAS" FORCE)
-
-    if(CMAKE_C_COMPILER_ID MATCHES "GNU")
-        set(CMAKE_C_FLAGS       "${CMAKE_C_FLAGS} -w")
-        set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -w")
-        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -w")
-    endif()
 
     # sadly we cannot restrict ourselves to only double and complex OpenBLAS build,
     # since the utest and ctest will fail and the build terminates
@@ -107,9 +104,6 @@ if(COIN_ENABLE_DOWNLOAD_LAPACK)
 
     restore_tmp(BUILD_SHARED_LIBS   _TMP_BUILD_SHARED_LIBS)
     restore_tmp(BUILD_TESTING       _TMP_BUILD_TESTING)
-    restore_tmp(CMAKE_C_FLAGS       _TMP_CFLAGS)
-    restore_tmp(CMAKE_CXX_FLAGS     _TMP_CXXFLAGS)
-    restore_tmp(CMAKE_Fortran_FLAGS _TMP_FortranFLAGS)
 
 elseif(COIN_USE_SYSTEM_LAPACK)
     find_package(LAPACK REQUIRED)
@@ -122,9 +116,66 @@ endif()
 # <===    Lapack
 # #################################################
 
-# ============================================================
+# #################################################
+# ===> METIS via FetchContent
+# #################################################
+
+add_library(METIS_TARGET INTERFACE)
+
+if (MUMPS_USE_METIS)
+    if (METIS_LIB_PATH AND METIS_INC_PATH)
+        add_library(_METIS_USER_IMPORTED UNKNOWN IMPORTED)
+        set_target_properties(_METIS_USER_IMPORTED PROPERTIES
+            IMPORTED_LOCATION "${METIS_LIB_PATH}"
+            INTERFACE_INCLUDE_DIRECTORIES "${METIS_INC_PATH}"
+        )
+        message(STATUS "Using user-provided METIS: ${METIS_LIB_PATH}")
+        target_link_libraries(METIS_TARGET INTERFACE _METIS_USER_IMPORTED)
+    elseif (COIN_ENABLE_DOWNLOAD_METIS)
+        set(METIS_URL "https://github.com/KarypisLab/METIS/archive/refs/tags/v5.2.1.tar.gz")
+
+        set(IDXWIDTH "#define IDXTYPEWIDTH 32")
+        set(REALWIDTH "#define REALTYPEWIDTH 32")
+        set(GKLIB_PATH "$ENV{HOME}/local") 
+        set(METIS_URL "https://github.com/KarypisLab/METIS/archive/refs/tags/v5.2.1.tar.gz")
+
+        FetchContent_Declare(
+            METIS
+            URL ${METIS_URL}
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+            PATCH_COMMAND
+                ${CMAKE_COMMAND} -E make_directory build
+                COMMAND ${CMAKE_COMMAND} -E make_directory build/xinclude
+                COMMAND ${CMAKE_COMMAND} -E echo "${IDXWIDTH}" > build/xinclude/metis.h
+                COMMAND ${CMAKE_COMMAND} -E echo "${REALWIDTH}" >> build/xinclude/metis.h
+                COMMAND ${CMAKE_COMMAND} -E cat include/metis.h >> build/xinclude/metis.h
+                COMMAND ${CMAKE_COMMAND} -E copy include/CMakeLists.txt build/xinclude
+        )
+        FetchContent_MakeAvailable(METIS)
+
+        target_include_directories(METIS_TARGET INTERFACE ${CMAKE_BINARY_DIR}/metis-xinclude)
+        target_link_libraries(METIS_TARGET INTERFACE metis)
+    else ()
+        find_package(METIS)
+        if(NOT METIS_FOUND)
+            message(FATAL_ERROR "METIS is required for MUMPS but not found. "
+                                "Provide -DMETIS_LIB_PATH=/path/to/libmetis.so "
+                                "and -DMETIS_INC_PATH=/path/to/include, "
+                                "build METIS from source -DCOIN_ENABLE_DOWNLOAD_METIS=ON "
+                                "or disable METIS with -DMUMPS_USE_METIS=OFF")
+        else ()
+            target_link_libraries(METIS_TARGET INTERFACE METIS::METIS)
+        endif ()
+    endif ()
+endif ()
+
+restore_tmp(CMAKE_C_FLAGS       _TMP_CFLAGS)
+restore_tmp(CMAKE_CXX_FLAGS     _TMP_CXXFLAGS)
+restore_tmp(CMAKE_Fortran_FLAGS _TMP_FortranFLAGS)
+
+# #################################################
 # ===> MUMPS via FetchContent
-# ============================================================
+# #################################################
 
 if (COIN_ENABLE_DOWNLOAD_MUMPS)
     set(MUMPS_VERSION "5.8.1")
@@ -142,9 +193,6 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
         FetchContent_MakeAvailable(Mumps)
     endif()
 endif()
-
-set(CMAKE_GENERATOR    "${CMAKE_GENERATOR_OLD}")
-set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM_OLD}")
 
 # #################################################
 # ===>   Restart cmake

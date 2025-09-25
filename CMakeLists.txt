@@ -48,6 +48,7 @@ option(COIN_ENABLE_DOXYGEN           "Enable the build of doxygen documentation"
 
 # options from ThirdParty/CMakeLists.txt
 option(COIN_ENABLE_DOWNLOAD_MUMPS        "Enable the download / compilation of Mumps" ON)
+option(COIN_ENABLE_DOWNLOAD_METIS        "Enable the download / compilation of Metis" OFF)
 option(COIN_ENABLE_DOWNLOAD_MINGW_LAPACK "Enable the download / compilation of MinGW compiled Blas / Lapack" OFF)
 option(COIN_ENABLE_DOWNLOAD_LAPACK       "Enable the download / compilation of Blas / Lapack" OFF)
 option(COIN_ENABLE_DOWNLOAD_MINLPLIB     "Enable the download / run of minlp benchmark" OFF)
@@ -178,30 +179,6 @@ if (USE_PROCESSOR_EXTENSIONS)
         set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${SSE_COMPILER_FLAGS}")
     endif ()
 endif ()
-
-add_library(METIS_TARGET INTERFACE)
-
-if (MUMPS_USE_METIS)
-    if (METIS_LIB_PATH AND METIS_INC_PATH)
-        add_library(_METIS_USER_IMPORTED UNKNOWN IMPORTED)
-        set_target_properties(_METIS_USER_IMPORTED PROPERTIES
-            IMPORTED_LOCATION "${METIS_LIB_PATH}"
-            INTERFACE_INCLUDE_DIRECTORIES "${METIS_INC_PATH}"
-        )
-        message(STATUS "Using user-provided METIS: ${METIS_LIB_PATH}")
-        target_link_libraries(METIS_TARGET INTERFACE _METIS_USER_IMPORTED)
-    else()
-        find_package(METIS)
-        if(NOT METIS_FOUND)
-            message(FATAL_ERROR "METIS is required for MUMPS but not found. "
-                                "Provide -DMETIS_LIB_PATH=/path/to/libmetis.so "
-                                "and -DMETIS_INC_PATH=/path/to/include, "
-                                "or disable METIS with -DMUMPS_USE_METIS=OFF")
-        else()
-            target_link_libraries(METIS_TARGET INTERFACE METIS::METIS)
-        endif()
-    endif()
-endif()
 
 # Check for MKL
 if (COIN_HAS_MKL)
