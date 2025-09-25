@@ -25,7 +25,6 @@ option(DOWNLOAD_MUMPS               "Enable the download / compilation of Mumps"
 option(DOWNLOAD_LAPACK              "Enable the download / compilation of Blas / Lapack" OFF)
 option(USE_SYSTEM_LAPACK            "Enable the use of the system Lapack" ON)
 option(USE_PROCESSOR_EXTENSIONS      "Use sse / mmx / avx extensions during compilation" OFF)
-option(COIN_ENABLE_COMPAT            "Enable libc compatibility" OFF)   # Do not compile if ON
 
 # MUMPS build options
 option(MUMPS_USE_LIBSEQ     "Use the MUMPS sequential MPI stub" ON)
@@ -46,7 +45,6 @@ option(COIN_COMPILE_COVERAGE         "Activate the code coverage compilation" OF
 option(COIN_COMPILE_LTO              "Activate the whole program optimization" OFF)  # GCC macOS does not support this
 option(COIN_HAS_MKL                  "Use Intel MKL library (requires Intel compiler)" OFF)
 option(COIN_USE_FAST_CODE            "Use intensive optimization flags" ON)
-option(COIN_TESTS_DISABLE_TIMEOUT    "Disable the timeout of the tests" OFF)
 option(COIN_ENABLE_DOXYGEN           "Enable the build of doxygen documentation" OFF)
 
 # Set paths of source
@@ -120,27 +118,11 @@ if (COIN_COMPILE_LTO)
     check_ipo_supported()
 endif ()
 
-if (COIN_ENABLE_COMPAT)
-    # Disable extra stdc++ symbols (@GLIBCXX_3.4.21)
-    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -include ${CMAKE_CURRENT_SOURCE_DIR}/cmake/compatibility.h")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include ${CMAKE_CURRENT_SOURCE_DIR}/cmake/compatibility.h")
-endif ()
-
-# Desactivate some relocation types for portability
-if (UNIX AND COIN_ENABLE_COMPAT)
-    check_c_compiler_flag("-Wa,-mrelax-relocations=no" HAVE_RELAX_RELOC_FLAG)
-    if (HAVE_RELAX_RELOC_FLAG)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wa,-mrelax-relocations=no")
-    endif ()
-endif ()
-
 if (USE_PROCESSOR_EXTENSIONS)
     # Check for SSE* and AVX*
     find_package(SSE)
-    if (MMX_FOUND OR
-            SSE2_FOUND OR SSE3_FOUND OR SSSE3_FOUND OR SSE4_1_FOUND OR SSE4_2_FOUND OR
-            AVX_FOUND OR AVX2_FOUND)
+    if (MMX_FOUND OR SSE2_FOUND OR SSE3_FOUND OR SSSE3_FOUND OR
+        SSE4_1_FOUND OR SSE4_2_FOUND OR AVX_FOUND OR AVX2_FOUND)
         set(CMAKE_C_FLAGS       "${CMAKE_C_FLAGS} ${SSE_COMPILER_FLAGS}")
         set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} ${SSE_COMPILER_FLAGS}")
         set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${SSE_COMPILER_FLAGS}")
