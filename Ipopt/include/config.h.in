@@ -4,10 +4,10 @@
 #define COIN_C_FINITE @COIN_C_FINITE@
 
 /* Define to the debug sanity check level (0 is no test) */
-#define COIN_IPOPT_CHECKLEVEL @COIN_IPOPT_CHECKLEVEL@
+#define IPOPT_CHECKLEVEL @IPOPT_CHECKLEVEL@
 
 /* Define to the debug verbosity level (0 is no output) */
-#define COIN_IPOPT_VERBOSITY @COIN_IPOPT_VERBOSITY@
+#define IPOPT_VERBOSITY @IPOPT_VERBOSITY@
 
 /* Define to dummy `main' function (if any) required to link to the Fortran
    libraries. */

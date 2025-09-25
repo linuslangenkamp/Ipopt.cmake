@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.14)
-cmake_policy(SET CMP0075 NEW)
 project(Ipopt)
 
 # FUNNY_LAPACK_FINT
@@ -37,8 +36,8 @@ set(METIS_LIB_PATH "" CACHE STRING "Path to libmetis (file) or directory contain
 set(METIS_INC_PATH "" CACHE PATH   "Path to METIS include directory (contains metis.h)")
 
 # other options
-set(COIN_IPOPT_CHECKLEVEL "0" CACHE STRING "The debug sanity check level of Ipopt (0 if no test)")
-set(COIN_IPOPT_VERBOSITY  "0" CACHE STRING "The debug verbosity level of Ipopt (0 if no output)")
+set(IPOPT_CHECKLEVEL "0" CACHE STRING "The debug sanity check level of Ipopt (0 if no test)")
+set(IPOPT_VERBOSITY  "0" CACHE STRING "The debug verbosity level of Ipopt (0 if no output)")
 
 # Compilation options
 option(ENABLE_SHARED_LIBRARIES       "Build libraries as shared libraries" OFF)
@@ -66,8 +65,8 @@ mark_as_advanced(ENABLE_SHARED_LIBRARIES
         IPOPT_HAS_PARDISO_MKL
         IPOPT_HAS_PARDISO_OLDINTERFACE
         IPOPT_HAS_PARDISO_PARALLEL
-        COIN_IPOPT_CHECKLEVEL
-        COIN_IPOPT_VERBOSITY
+        IPOPT_CHECKLEVEL
+        IPOPT_VERBOSITY
         USE_PROCESSOR_EXTENSIONS)
 
 # Set paths for binary and library generation inside the build directory:
@@ -121,7 +120,6 @@ endif ()
 
 include(CheckCCompilerFlag)
 if (COIN_COMPILE_LTO)
-    cmake_policy(SET CMP0069 NEW)
     include(CheckIPOSupported)
     check_ipo_supported()
 endif ()
