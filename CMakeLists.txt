@@ -7,7 +7,6 @@ project(Ipopt)
 
 option(IPOPT_HAS_PARDISO                "Enable Pardiso solver" OFF)
 option(IPOPT_HAS_PARDISO_MKL            "Enable if you are using Pardiso from MKL" OFF)
-option(IPOPT_HAS_PARDISO_OLDINTERFACE   "Enable if you are not using at least a 4.0 version of Pardiso" OFF)
 option(IPOPT_HAS_PARDISO_PARALLEL       "Enable if you are using the parallel version of Pardiso" OFF)
 option(IPOPT_HAS_HSL                    "Enable HSL interface"  OFF)
 option(IPOPT_HAS_WSMP                   "Enable WSMP solver"    OFF)
@@ -41,7 +40,6 @@ set(IPOPT_VERBOSITY  "0" CACHE STRING "The debug verbosity level of Ipopt (0 if 
 # Compilation options
 option(ENABLE_SHARED_LIBRARIES       "Build libraries as shared libraries" OFF)
 option(COIN_COMPILE_STATIC           "Activate the static linking" ON)
-option(COIN_COMPILE_COVERAGE         "Activate the code coverage compilation" OFF)
 option(COIN_COMPILE_LTO              "Activate the whole program optimization" OFF)  # GCC macOS does not support this
 option(COIN_HAS_MKL                  "Use Intel MKL library (requires Intel compiler)" OFF)
 option(COIN_USE_FAST_CODE            "Use intensive optimization flags" ON)
@@ -52,12 +50,10 @@ set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Ipopt/sources/)
 
 mark_as_advanced(ENABLE_SHARED_LIBRARIES
         COIN_COMPILE_STATIC
-        COIN_COMPILE_COVERAGE
         COIN_COMPILE_LTO
         COIN_HAS_MKL
         COIN_USE_FAST_CODE
         IPOPT_HAS_PARDISO_MKL
-        IPOPT_HAS_PARDISO_OLDINTERFACE
         IPOPT_HAS_PARDISO_PARALLEL
         IPOPT_CHECKLEVEL
         IPOPT_VERBOSITY
@@ -81,7 +77,7 @@ Enable_Testing ()
 # Check options
 #------------------------------------------------------------
 
-if (IPOPT_ENABLE_INEXACT AND NOT (IPOPT_HAS_PARDISO OR IPOPT_HAS_PARDISO_MKL OR IPOPT_HAS_PARDISO_OLDINTERFACE OR IPOPT_HAS_PARDISO_PARALLEL))
+if (IPOPT_ENABLE_INEXACT AND NOT (IPOPT_HAS_PARDISO OR IPOPT_HAS_PARDISO_MKL OR IPOPT_HAS_PARDISO_PARALLEL))
     message(FATAL_ERROR "Error: Inexact solver is only available through MKL. Please activate the MKL")
 endif ()
 
@@ -375,16 +371,6 @@ if (UNIX)
     if (NOT ENABLE_SHARED_LIBRARIES)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
         set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fPIC")
-    endif ()
-    if (COIN_COMPILE_COVERAGE)
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O0 --coverage")
-            set(CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -O0 --coverage")
-            set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -O0 --coverage")
-        endif ()
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version='408*'")
-        endif ()
     endif ()
 endif ()
 
