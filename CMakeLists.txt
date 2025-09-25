@@ -104,9 +104,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-include(coin-macros)
 include(GetAcInitVersion)
-include(CheckCLinkerFlag)
 include(GNUInstallDirs)
 include(cmake/utils.cmake)
 
@@ -144,8 +142,7 @@ set(PACKAGE_STRING    "Ipopt")
 set(PACKAGE_TARNAME   "ipopt")
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/ipopt_binary"
-            CACHE PATH "Ipopt install prefix" FORCE)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Ipopt install prefix" FORCE)
 endif ()
 
 include(CheckCCompilerFlag)
@@ -246,13 +243,6 @@ if (COIN_HAS_MKL)
 
     set(COIN_HAS_LAPACK ON CACHE BOOL "Use Intel MKL library (requires Intel compiler)")
 endif ()
-
-# Check some directories
-
-coin_check_and_add_include_path(COIN_HAS_MUMPS_INCLUDE_PATH)
-coin_check_and_add_library_path(COIN_HAS_MUMPS_LIBRARY_PATH)
-coin_check_and_add_include_path(COIN_HAS_WSMP_INCLUDE_PATH)
-coin_check_and_add_library_path(COIN_HAS_WSMP_LIBRARY_PATH)
 
 #-----------------------------------------------------------------------------
 # Dependencies
@@ -454,14 +444,6 @@ if (UNIX)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wshadow -Wuninitialized ")
         set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wall -Wshadow -Wmissing-prototypes -Wuninitialized ")
     endif ()
-    if (COIN_COMPILE_STATIC)
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT APPLE)
-            check_c_linker_flag("-z muldef" ZFLAGDEFINED)
-            if (ZFLAGDEFINED)
-                set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z muldefs")
-            endif ()
-        endif ()
-    endif ()
     if (COIN_COMPILE_COVERAGE)
         if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -O0 --coverage")
@@ -479,13 +461,6 @@ if (UNIX)
     if (COIN_COMPILE_PROFILE_VALGRIND)
         set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -p")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -p")
-    else ()
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT APPLE)
-            check_c_linker_flag("-z muldef" ZFLAGDEFINED)
-            if (ZFLAGDEFINED)
-                set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -z muldefs")
-            endif ()
-        endif ()
     endif ()
 endif ()
 
@@ -637,8 +612,6 @@ if (COIN_USE_FAST_CODE)
 
 endif ()
 
-include(AC_HEADER_STDC)
-
 add_definitions(-DHAVE_CONFIG_H)
 
 #-----------------------------------------------
@@ -661,21 +634,12 @@ endif ()
 
 add_subdirectory(ThirdParty)
 
-# include_directories(${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/include
-#         ${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/include/ampl)
-# link_directories(${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/lib
-#         ${CMAKE_BINARY_DIR}/Dependencies/${CMAKE_CFG_INTDIR}/lib64)
-
 #
 # HSL Management
 #
 
-if (MUMPS_USE_METIS) # METIS found
+if (MUMPS_USE_METIS)
     add_definitions(-DCOINHSL_HAS_METIS)
-endif ()
-
-if (IPOPT_HAS_LINEARSOLVERLOADER OR IPOPT_ENABLE_PARDISOSOLVERLOADER)
-    find_package(DL)
 endif ()
 
 add_subdirectory(Ipopt)
@@ -735,26 +699,21 @@ include(CTest)
 #                         #
 ###########################
 
-# available colors: {u,b,bg, } black, red, green, yellow, blue, purple, cyan, white, reset
-
-color_message("${color_green}")
-color_message("************************")
-color_message("*                      *")
-color_message("* Configuration sum-up *")
-color_message("*                      *")
-color_message("************************")
-color_message("${color_reset} ")
-
-color_message("${color_cyan}Installation directory:${color_reset} ${CMAKE_INSTALL_PREFIX}")
-color_message("${color_cyan}Build type:${color_reset} ${CMAKE_BUILD_TYPE}")
+message(STATUS "************************")
+message(STATUS "*                      *")
+message(STATUS "* Configuration sum-up *")
+message(STATUS "*                      *")
+message(STATUS "************************")
+message(STATUS "Installation directory: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 get_directory_property(ALL_INCLUDES INCLUDE_DIRECTORIES)
 get_directory_property(ALL_LINKS    LINK_DIRECTORIES)
 get_directory_property(ALL_DEFS     COMPILE_DEFINITIONS)
 
-message(STATUS "${color_cyan}Include directories:${color_reset}     ${ALL_INCLUDES}")
-message(STATUS "${color_cyan}Link directories:${color_reset}        ${ALL_LINKS}")
-message(STATUS "${color_cyan}Compilation definitions:${color_reset} ${ALL_DEFS}")
+message(STATUS "Include directories:${color_reset}     ${ALL_INCLUDES}")
+message(STATUS "Link directories:${color_reset}        ${ALL_LINKS}")
+message(STATUS "Compilation definitions:${color_reset} ${ALL_DEFS}")
 
 #
 # Install part

@@ -4,7 +4,7 @@ Coin-OR Ipopt repository: [coin-or/Ipopt](https://github.com/coin-or/Ipopt.git)
 
 This CMake version is forked from: [rjodon/coinor-ipopt-with-cmake](https://github.com/rjodon/coinor-ipopt-with-cmake.git)
 
-This repository is still work in progress. You are welcome to open pull requests with fixes / updates, thank you!
+This repository is still work in progress. You are welcome to open pull requests with fixes / updates or extensions, thank you!
 
 ---
 
@@ -17,12 +17,18 @@ mkdir build && cd build
 
 Run CMake configure (the default options should work out):
 ```bash
-cmake .. <Options>
+cmake .. -DCMAKE_BUILD_TYPE=Release <Options>
 ```
 
 ### Note:
-The default configuration requires **LAPACK** and **Metis** to be available on your system.
+You need a C, C++ and Fortran compiler on your system. Otherwise you can't build the necessary dependencies.
+
+The default configuration requires **LAPACK** and **METIS** to be available on your system.
 It will automatically build and install MUMPS and Ipopt.
+
+However, you can also build LAPACK (latest OpenBLAS) from source by setting `-DCOIN_ENABLE_DOWNLOAD_LAPACK=OFF` and `-DCOIN_USE_SYSTEM_LAPACK=ON`.
+
+If the project cannot find your METIS installation, you can also provide the library `-DMETIS_LIB_PATH=path/to/metis.so` and include path `-DMETIS_INC_PATH=path/to/include` directly.
 
 ### Available CMake Options
 
