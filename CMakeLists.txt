@@ -6,7 +6,6 @@ project(Ipopt)
 
 #undef HAVE_MPI_INITIALIZED - Define to 1 if you have the `MPI_Initialized' function.
 
-option(IPOPT_HAS_AMPL                   "Enable Ampl interface" OFF)
 option(IPOPT_HAS_PARDISO                "Enable Pardiso solver" OFF)
 option(IPOPT_HAS_PARDISO_MKL            "Enable if you are using Pardiso from MKL" OFF)
 option(IPOPT_HAS_PARDISO_OLDINTERFACE   "Enable if you are not using at least a 4.0 version of Pardiso" OFF)
@@ -49,7 +48,6 @@ option(COIN_ENABLE_DOXYGEN           "Enable the build of doxygen documentation"
 
 # options from ThirdParty/CMakeLists.txt
 option(COIN_ENABLE_DOWNLOAD_MUMPS        "Enable the download / compilation of Mumps" ON)
-option(COIN_ENABLE_DOWNLOAD_ASL          "Enable the download / compilation of Ampl Solver Library" OFF)
 option(COIN_ENABLE_DOWNLOAD_MINGW_LAPACK "Enable the download / compilation of MinGW compiled Blas / Lapack" OFF)
 option(COIN_ENABLE_DOWNLOAD_LAPACK       "Enable the download / compilation of Blas / Lapack" OFF)
 option(COIN_ENABLE_DOWNLOAD_MINLPLIB     "Enable the download / run of minlp benchmark" OFF)

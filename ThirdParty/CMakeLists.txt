@@ -153,91 +153,6 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
     endif()
 endif()
 
-# #################################################
-# ===> ASL compilation
-# #################################################
-
-if (COIN_ENABLE_DOWNLOAD_ASL)
-    set(ASL_VERSION "3.1.0")
-    set(COIN_HAS_ASL ON CACHE BOOL "Enable the ASL support" FORCE)
-
-    set(ASL_URL        "https:////github.com/ampl/mp/archive/${ASL_VERSION}.tar.gz" CACHE FILEPATH "Path to ${ASL_VERSION}.tar.gz source archive")
-    set(ASL_InstallDir "${ext-InstallDir}/ASL-${ASL_VERSION}/${CMAKE_CFG_INTDIR}/")
-
-    ExternalProject_Add(ext-ASL
-            PREFIX            ${ASL_InstallDir}
-            URL               ${ASL_URL}
-            UPDATE_COMMAND    ""
-            PATCH_COMMAND     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ASL/AMPLConfig.cmake.in ${ASL_InstallDir}/src/ext-ASL/src/asl/solvers/
-            && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ASL/CMakeLists.txt      ${ASL_InstallDir}/src/ext-ASL/src/asl/solvers/
-            && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ASL/FindDL.cmake        ${ASL_InstallDir}/src/ext-ASL/src/asl/solvers/
-            && ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ASL/details.c0.cmake.in ${ASL_InstallDir}/src/ext-ASL/src/asl/solvers/
-            CONFIGURE_COMMAND ${CMAKE_COMMAND} -E make_directory ${ASL_InstallDir}/src/ext-ASL/src/asl/solvers/build
-            && ${CMAKE_COMMAND} -E chdir ${ASL_InstallDir}/src/ext-ASL/src/asl/solvers/build ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${ext-InstallDir} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -G ${CMAKE_GENERATOR} ..
-            BUILD_COMMAND     ${CMAKE_COMMAND} -E chdir ${ASL_InstallDir}/src/ext-ASL/src/asl/solvers/build ${CMAKE_MAKE_PROGRAM}
-            INSTALL_COMMAND   ${CMAKE_COMMAND} -E chdir ${ASL_InstallDir}/src/ext-ASL/src/asl/solvers/build ${CMAKE_MAKE_PROGRAM} install
-            )
-
-    set(IPOPT_HAS_AMPL ON CACHE BOOL "Enable Ampl interface")
-endif ()
-
-# #################################################
-# <=== ASL compilation
-# #################################################
-
-# #################################################
-# ===> Tests
-# #################################################
-
-if (COIN_ENABLE_DOWNLOAD_MINLPLIB)
-    set(MINLPLIB_URL "http:////www.minlplib.org/minlplib_nl.zip" CACHE FILEPATH "Path to MinLpNl source archive")
-
-    ExternalProject_Add(ext-MINLPLIB
-            PREFIX            ${ext-InstallDir}/MINLPLIB
-            URL               ${MINLPLIB_URL}
-            PATCH_COMMAND     ""
-            UPDATE_COMMAND    ""
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND     ""
-            INSTALL_COMMAND   ""
-            )
-
-    include(MinLpTests.cmake)
-endif ()
-
-# #################################################
-# <=== Tests
-# #################################################
-
-# #################################################
-# ===> Patch
-# #################################################
-
-if (WIN32 AND COIN_ENABLE_DOWNLOAD_PATCH)
-    set(PATCH_VERSION "2.5.9-7")
-
-    set(PATCH_URL "https:////sourceforge.net//projects//gnuwin32//files//patch//${PATCH_VERSION}//patch-${PATCH_VERSION}-bin.zip" CACHE FILEPATH "Path to Patch-${PATCH_VERSION} binary archive")
-
-    ExternalProject_Add(ext-PATCH
-            PREFIX            ${ext-InstallDir}/Patch-${PATCH_VERSION}/
-            URL               ${PATCH_URL}
-            PATCH_COMMAND     ""
-            UPDATE_COMMAND    ""
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND     ""
-            INSTALL_COMMAND   ""
-            )
-
-    set(PATCH_EXECUTABLE "${ext-InstallDir}/Patch-${PATCH_VERSION}/src/ext-PATCH/bin/patch.exe" CACHE FILEPATH "Path to the patch executable")
-else ()
-    find_program(TMP_PATCH_EXECUTABLE patch)
-    set(PATCH_EXECUTABLE "${TMP_PATCH_EXECUTABLE}" CACHE FILEPATH "Path to the patch executable")
-endif ()
-
-# #################################################
-# <=== Patch
-# #################################################
-
 set(CMAKE_GENERATOR    "${CMAKE_GENERATOR_OLD}")
 set(CMAKE_MAKE_PROGRAM "${CMAKE_MAKE_PROGRAM_OLD}")
 
@@ -255,9 +170,6 @@ macro(add_library_mod _target)
     if (COIN_ENABLE_DOWNLOAD_MUMPS)
         add_dependencies(${_target} dmumps)
     endif ()
-    if (COIN_ENABLE_DOWNLOAD_ASL)
-        add_dependencies(${_target} ext-ASL)
-    endif ()
     if (COIN_ENABLE_DOWNLOAD_LAPACK)
         add_dependencies(${_target} LAPACK_TARGET)
     endif ()
@@ -268,9 +180,6 @@ macro(add_executable_mod _target)
 
     if (COIN_ENABLE_DOWNLOAD_MUMPS)
         add_dependencies(${_target} dmumps)
-    endif ()
-    if (COIN_ENABLE_DOWNLOAD_ASL)
-        add_dependencies(${_target} ext-ASL)
     endif ()
     if (COIN_ENABLE_DOWNLOAD_LAPACK)
         add_dependencies(${_target} LAPACK_TARGET)

@@ -1,6 +1,3 @@
-# TODO:
-# add ScalableProblems_java
-
 get_ac_init_version(${Ipopt_DIR}/configure.ac IPOPT)
 
 set(IPOPT_VERSION_MAJOR   "${IPOPT_MAJOR_VERSION}"  CACHE STRING "The Ipopt major version number")
@@ -14,8 +11,6 @@ mark_as_advanced(IPOPT_VERSION_MAJOR
         IPOPT_VERSION)
 
 add_definitions(-DIPOPTLIB_BUILD)
-# add_definitions(-DIPOPT_BUILD -DIPOPTLIB_BUILD -DIPOPT_HAS_LAPACK)
-# add_definitions(-DIPOPT_BUILD -DCOIN_USE_MUMPS_MPI_H -DIPOPT_HAS_STD__RAND -DIPOPT_HAS_LAPACK)
 
 message(STATUS "Fortran name mangling:")
 message(STATUS "F77_FUNC = ${F77_FUNC}")
@@ -293,11 +288,6 @@ if (IPOPT_HAS_HSL)
     endif ()
 endif ()
 
-if (IPOPT_HAS_AMPL)
-    set(IPOPT_SRC_LIST ${IPOPT_SRC_LIST}
-            ${Ipopt_DIR}/src/Apps/AmplSolver/AmplTNLP.cpp)
-endif ()
-
 if (ENABLE_SHARED_LIBRARIES)
     add_library_mod(ipopt SHARED ${IPOPT_SRC_LIST})
 else ()
@@ -309,12 +299,6 @@ if (COIN_COMPILE_LTO)
 endif ()
 
 target_include_directories(ipopt BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
-
-if (IPOPT_HAS_AMPL)
-    set (IPOPT_AMPL_SRC_LIST ${Ipopt_DIR}/src/Apps/AmplSolver/ampl_ipopt.cpp)
-    add_definitions(-DIPOPTAMPL_BUILD)
-    add_executable_mod(ipopt ${IPOPT_AMPL_SRC_LIST})
-endif ()
 
 if (COIN_HAS_MUMPS)
     target_link_libraries(ipopt dmumps mumps_common seq pthread)
@@ -336,12 +320,8 @@ endif ()
 if (COIN_ENABLE_DOWNLOAD_LAPACK OR COIN_ENABLE_DOWNLOAD_MUMPS OR COIN_HAS_MUMPS OR COIN_USE_SYSTEM_LAPACK)
     target_link_libraries(ipopt gfortran)
 endif ()
-if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR COIN_ENABLE_DOWNLOAD_ASL OR ENABLE_SHARED_LIBRARIES) AND UNIX)
+if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR ENABLE_SHARED_LIBRARIES) AND UNIX)
     target_link_libraries(ipopt dl)
-endif ()
-
-if (COIN_ENABLE_DOWNLOAD_ASL)
-    target_link_libraries(ipopt amplsolver)
 endif ()
 
 if (IPOPT_HAS_WSMP)
@@ -379,8 +359,6 @@ install(TARGETS ipopt
 
 
 if (IPOPT_BUILD_EXAMPLES)
-    # TODO: fix this?
-    # include(${CMAKE_SOURCE_DIR}/ThirdParty/IpoptTests.cmake)
 
     set(ScalableProblems_SRCS ${Ipopt_DIR}/examples/ScalableProblems/LuksanVlcek1.cpp
             ${Ipopt_DIR}/examples/ScalableProblems/LuksanVlcek2.cpp
@@ -419,7 +397,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (COIN_ENABLE_DOWNLOAD_LAPACK OR COIN_ENABLE_DOWNLOAD_MUMPS OR COIN_HAS_MUMPS OR COIN_USE_SYSTEM_LAPACK)
         target_link_libraries(solve_problem gfortran)
     endif ()
-    if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR COIN_ENABLE_DOWNLOAD_ASL OR ENABLE_SHARED_LIBRARIES) AND UNIX)
+    if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR ENABLE_SHARED_LIBRARIES) AND UNIX)
         target_link_libraries(solve_problem dl)
     endif ()
     include_directories(${Ipopt_DIR}/examples/ScalableProblems)
@@ -647,7 +625,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (COIN_ENABLE_DOWNLOAD_LAPACK OR COIN_ENABLE_DOWNLOAD_MUMPS OR COIN_HAS_MUMPS OR COIN_USE_SYSTEM_LAPACK)
         target_link_libraries(cpp_example gfortran)
     endif ()
-    if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR COIN_ENABLE_DOWNLOAD_ASL OR ENABLE_SHARED_LIBRARIES) AND UNIX)
+    if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR ENABLE_SHARED_LIBRARIES) AND UNIX)
         target_link_libraries(cpp_example dl)
     endif ()
     if (UNIX)
@@ -682,7 +660,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (COIN_ENABLE_DOWNLOAD_LAPACK OR COIN_ENABLE_DOWNLOAD_MUMPS OR COIN_HAS_MUMPS OR COIN_USE_SYSTEM_LAPACK)
         target_link_libraries(hs071_c gfortran)
     endif ()
-    if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR COIN_ENABLE_DOWNLOAD_ASL OR ENABLE_SHARED_LIBRARIES) AND UNIX)
+    if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR ENABLE_SHARED_LIBRARIES) AND UNIX)
         target_link_libraries(hs071_c dl)
     endif ()
     if (UNIX)
@@ -718,7 +696,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (COIN_ENABLE_DOWNLOAD_LAPACK OR COIN_ENABLE_DOWNLOAD_MUMPS OR COIN_HAS_MUMPS OR COIN_USE_SYSTEM_LAPACK)
         target_link_libraries(hs071_cpp gfortran)
     endif ()
-    if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR COIN_ENABLE_DOWNLOAD_ASL OR ENABLE_SHARED_LIBRARIES) AND UNIX)
+    if ((IPOPT_ENABLE_LINEARSOLVERLOADER OR ENABLE_SHARED_LIBRARIES) AND UNIX)
         target_link_libraries(hs071_cpp dl)
     endif ()
     if (UNIX)
