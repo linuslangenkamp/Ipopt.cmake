@@ -148,8 +148,7 @@ if (COIN_ENABLE_DOWNLOAD_MUMPS)
 
     FetchContent_GetProperties(Mumps)
     if(NOT mumps_POPULATED)
-        FetchContent_Populate(Mumps)
-        add_subdirectory(${mumps_SOURCE_DIR} ${mumps_BINARY_DIR})
+        FetchContent_MakeAvailable(Mumps)
     endif()
 endif()
 
