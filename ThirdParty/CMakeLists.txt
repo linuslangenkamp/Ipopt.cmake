@@ -107,7 +107,7 @@ if (DOWNLOAD_MUMPS)
         Mumps
         URL ${MUMPS_URL}
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-        PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists_mumps.cmake CMakeLists.txt
+        PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/MUMPS/CMakeLists_mumps.cmake CMakeLists.txt
     )
 
     FetchContent_GetProperties(Mumps)
