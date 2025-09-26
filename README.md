@@ -17,7 +17,7 @@ mkdir build && cd build
 
 Run CMake configure (the default options should work out):
 ```bash
-cmake .. -DCMAKE_BUILD_TYPE=Release <Options>
+cmake .. <Options>
 ```
 
 ### Note:
@@ -26,7 +26,7 @@ You need a C, C++ and Fortran compiler on your system. Otherwise you can't build
 The default configuration requires **LAPACK** and **METIS** to be available on your system.
 It will automatically build and install MUMPS and Ipopt.
 
-However, you can also build LAPACK (latest OpenBLAS) from source by setting `-DDOWNLOAD_LAPACK=OFF` and `-DUSE_SYSTEM_LAPACK=ON`.
+However, you can also build LAPACK (latest OpenBLAS) from source by setting `-DDOWNLOAD_LAPACK=ON` and `-DUSE_SYSTEM_LAPACK=OFF`.
 
 If the project cannot find your METIS installation, you can also provide the library `-DMETIS_LIB_PATH=path/to/metis.so` and include path `-DMETIS_INC_PATH=path/to/include` directly.
 

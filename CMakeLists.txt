@@ -12,47 +12,44 @@ option(IPOPT_HAS_HSL                    "Enable HSL interface"  OFF)
 option(IPOPT_HAS_WSMP                   "Enable WSMP solver"    OFF)
 option(IPOPT_HAS_SPRAL                  "Enable SPRAL solver"   OFF)
 option(IPOPT_HAS_MUMPS                  "Enable Mumps solver"   ON)
-option(IPOPT_SINGLE                     "Build with single precision"   OFF)
-option(IPOPT_INT64                      "Build with 64 bit integer type"   OFF)
+option(IPOPT_SINGLE                     "Build with single precision"     OFF)
+option(IPOPT_INT64                      "Build with 64 bit integer type"  OFF)
 option(IPOPT_BUILD_EXAMPLES             "Enable the building of examples" ON)
-option(IPOPT_HAS_LINEARSOLVERLOADER     "Build the dynamic linear solver loader" OFF)
+option(IPOPT_HAS_LINEARSOLVERLOADER     "Build the dynamic linear solver loader"  OFF)
 option(IPOPT_ENABLE_PARDISOSOLVERLOADER "Build the dynamic pardiso solver loader" OFF)
 option(IPOPT_ENABLE_INEXACT             "Build the inexact solver" OFF)
+
+set(IPOPT_CHECKLEVEL "0" CACHE STRING "The debug sanity check level of Ipopt (0 if no test)")
+set(IPOPT_VERBOSITY  "0" CACHE STRING "The debug verbosity level of Ipopt (0 if no output)")
 
 # options from ThirdParty/CMakeLists.txt
 option(DOWNLOAD_MUMPS               "Enable the download / compilation of Mumps" ON)
 option(DOWNLOAD_LAPACK              "Enable the download / compilation of Blas / Lapack" OFF)
 option(USE_SYSTEM_LAPACK            "Enable the use of the system Lapack" ON)
-option(USE_PROCESSOR_EXTENSIONS      "Use sse / mmx / avx extensions during compilation" OFF)
+option(USE_PROCESSOR_EXTENSIONS     "Use sse / mmx / avx extensions during compilation" OFF)
 
 # MUMPS build options
 option(MUMPS_USE_LIBSEQ     "Use the MUMPS sequential MPI stub" ON)
 option(MUMPS_USE_METIS      "Use the Metis library"             ON)
-option(MUMPS_INSTALL_COIN   "Install MUMPS for CoinOR"          ON) # TODO: what is this??
+# TODO: fix or add build with MPI!
 
 set(METIS_LIB_PATH "" CACHE STRING "Path to libmetis (file) or directory containing libmetis")
 set(METIS_INC_PATH "" CACHE PATH   "Path to METIS include directory (contains metis.h)")
-
-# other options
-set(IPOPT_CHECKLEVEL "0" CACHE STRING "The debug sanity check level of Ipopt (0 if no test)")
-set(IPOPT_VERBOSITY  "0" CACHE STRING "The debug verbosity level of Ipopt (0 if no output)")
+set(EXTERNAL_METIS_TARGET "" CACHE STRING "Existing METIS target to use: add_library(EXTERNAL_METIS_TARGET ALIAS MY_METIS_TARGET)")
 
 # Compilation options
-option(ENABLE_SHARED_LIBRARIES       "Build libraries as shared libraries" OFF)
-option(COIN_COMPILE_STATIC           "Activate the static linking" ON)
-option(COIN_COMPILE_LTO              "Activate the whole program optimization" OFF)  # GCC macOS does not support this
-option(COIN_HAS_MKL                  "Use Intel MKL library (requires Intel compiler)" OFF)
-option(COIN_USE_FAST_CODE            "Use intensive optimization flags" ON)
-option(COIN_ENABLE_DOXYGEN           "Enable the build of doxygen documentation" OFF)
+option(USE_FAST_CODE            "Use intensive optimization flags" ON)
+option(ENABLE_SHARED_LIBRARIES  "Build libraries as shared libraries" OFF)
+option(COMPILE_LTO              "Activate the whole program optimization" OFF)  # GCC macOS does not support this
+option(HAS_MKL                  "Use Intel MKL library (requires Intel compiler)" OFF)
 
 # Set paths of source
 set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Ipopt/sources/)
 
 mark_as_advanced(ENABLE_SHARED_LIBRARIES
-        COIN_COMPILE_STATIC
-        COIN_COMPILE_LTO
-        COIN_HAS_MKL
-        COIN_USE_FAST_CODE
+        COMPILE_LTO
+        HAS_MKL
+        USE_FAST_CODE
         IPOPT_HAS_PARDISO_MKL
         IPOPT_HAS_PARDISO_PARALLEL
         IPOPT_CHECKLEVEL
@@ -114,7 +111,7 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif ()
 
 include(CheckCCompilerFlag)
-if (COIN_COMPILE_LTO)
+if (COMPILE_LTO)
     include(CheckIPOSupported)
     check_ipo_supported()
 endif ()
@@ -133,7 +130,10 @@ endif ()
 add_library(METIS_TARGET INTERFACE)
 
 if (MUMPS_USE_METIS)
-    if (METIS_LIB_PATH AND METIS_INC_PATH)
+    if(TARGET EXTERNAL_METIS_TARGET)
+        message(STATUS "Using external METIS target.")
+        target_link_libraries(METIS_TARGET INTERFACE EXTERNAL_METIS_TARGET)
+    elseif(METIS_LIB_PATH AND METIS_INC_PATH)
         add_library(_METIS_USER_IMPORTED UNKNOWN IMPORTED)
         set_target_properties(_METIS_USER_IMPORTED PROPERTIES
             IMPORTED_LOCATION "${METIS_LIB_PATH}"
@@ -155,7 +155,7 @@ if (MUMPS_USE_METIS)
 endif()
 
 # Check for MKL
-if (COIN_HAS_MKL)
+if (HAS_MKL)
     find_package(MKL)
 
     if (MKL_FOUND)
@@ -459,7 +459,7 @@ mark_as_advanced(F77_FUNC
 
 # End of coverage
 
-if (COIN_USE_FAST_CODE)
+if (USE_FAST_CODE)
     set(CMAKE_CXX_FLAGS       "${CMAKE_CXX_FLAGS} -O3 -fomit-frame-pointer ")
     set(CMAKE_C_FLAGS         "${CMAKE_C_FLAGS} -O3 -fomit-frame-pointer ")
     set(CMAKE_Fortran_FLAGS   "${CMAKE_Fortran_FLAGS} -O3 ")
@@ -477,24 +477,6 @@ if (COIN_USE_FAST_CODE)
 endif ()
 
 add_definitions(-DHAVE_CONFIG_H)
-
-#-----------------------------------------------
-# Doxygen documentation
-#-----------------------------------------------
-
-set(coin_doxy_logname ) # output warning to stderr
-set(coin_doxy_excludes "*/.git*")
-set(coin_doxy_tagfiles )
-set(coin_doxy_tagname )
-
-find_package(Doxygen)
-
-if (DOXYGEN AND COIN_ENABLE_DOXYGEN)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxydoc/doxygen.conf.in ${CMAKE_BINARY_DIR}/doxydoc/doxygen.conf)
-
-    add_custom_target(docs
-            ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/doxydoc/doxygen.conf)
-endif ()
 
 add_subdirectory(ThirdParty)
 

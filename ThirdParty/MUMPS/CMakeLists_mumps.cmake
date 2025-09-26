@@ -742,17 +742,13 @@ if (MUMPS_USE_LIBSEQ)
           DESTINATION ${INCLUDEDIR}/
           PATTERN "*.h")
 
-  if (MUMPS_INSTALL_COIN)
-    install(FILES libseq/mpi.h
-            DESTINATION ${INCLUDEDIR}/
-            RENAME mumps_mpi.h)
-  endif ()
+  install(FILES libseq/mpi.h
+          DESTINATION ${INCLUDEDIR}/
+          RENAME mumps_mpi.h)
 else ()
-  if (MUMPS_INSTALL_COIN)
-    install(FILES ${MPI_C_INCLUDE_PATH}/libseq/mpi.h
-            DESTINATION ${INCLUDEDIR}/
-            RENAME mumps_mpi.h)
-  endif ()
+  install(FILES ${MPI_C_INCLUDE_PATH}/libseq/mpi.h
+          DESTINATION ${INCLUDEDIR}/
+          RENAME mumps_mpi.h)
 endif ()
 
 install(DIRECTORY include/
