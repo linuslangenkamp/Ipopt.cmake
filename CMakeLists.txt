@@ -420,6 +420,9 @@ set(FORTRAN_INTEGER_TYPE int)
 if (CMAKE_Fortran_COMPILER)
     enable_language(Fortran)
 
+    safe_tmp(_LOCAL_TMP_F_FLAGS CMAKE_Fortran_FLAGS)
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-lto")
+
     include(FortranCInterface)
 
     FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/F77Mangle.h
@@ -435,6 +438,7 @@ if (CMAKE_Fortran_COMPILER)
     string(REGEX MATCH "F77_GLOBAL_\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
     set(F77_FUNC_         "F77_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
     set(COIN_LAPACK_FUNC_ "COIN_LAPACK_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
+    restore_tmp(CMAKE_Fortran_FLAGS _LOCAL_TMP_F_FLAGS)
 else ()
     set(F77_FUNC          "F77_FUNC(name,NAME)  name##_")
     set(F77_FUNC_         "F77_FUNC_(name,NAME) name##__")
