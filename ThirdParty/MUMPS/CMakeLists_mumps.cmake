@@ -630,8 +630,9 @@ if ("${CMAKE_Fortran_COMPILER_ID}" MATCHES "GNU")
   set(LINK_LIBS ${LINK_LIBS} gfortran)
 endif ()
 
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -DALLOW_NON_INIT -Dintel_ ")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DAdd_")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fPIC -cpp -DALLOW_NON_INIT -Dintel_ ")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -DAdd_")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fPIC -DAdd_")
 
 if (WIN32)
   if (MUMPS_USE_LIBSEQ)
