@@ -622,15 +622,16 @@ set(MUMPS_Z_SRCS src/mumps_c.c
                 src/ztools.F
                 src/ztype3_root.F)
 
+set(LINK_LIBS ${LINK_LIBS} LAPACK_TARGET)
+
 if ("${CMAKE_Fortran_COMPILER_ID}" MATCHES "GNU")
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -w -fcray-pointer -fallow-argument-mismatch -fall-intrinsics -finit-local-zero")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
+  set(LINK_LIBS ${LINK_LIBS} gfortran)
 endif ()
 
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp -DALLOW_NON_INIT -Dintel_ ")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DAdd_")
-
-set(LINK_LIBS ${LINK_LIBS} LAPACK_TARGET)
 
 if (WIN32)
   if (MUMPS_USE_LIBSEQ)

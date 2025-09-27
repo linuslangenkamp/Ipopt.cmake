@@ -41,6 +41,15 @@ endif ()
 
 include(FetchContent)
 
+set(FETCHCONTENT_DL_EXTRA_ARGS "")
+
+if (CMAKE_VERSION VERSION_GREATER "3.23")
+    # Since CMake 3.24, FetchContent supports extra download arguments
+    set(FETCHCONTENT_DL_EXTRA_ARGS
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+endif()
+
 # #################################################
 # ===>    Lapack
 # #################################################
@@ -72,7 +81,7 @@ if(DOWNLOAD_LAPACK)
     FetchContent_Declare(
         OpenBLAS
         URL ${OPEN_BLAS_URL}
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        ${FETCHCONTENT_DL_EXTRA_ARGS}
     )
 
     FetchContent_MakeAvailable(OpenBLAS)
@@ -106,7 +115,7 @@ if (DOWNLOAD_MUMPS)
     FetchContent_Declare(
         Mumps
         URL ${MUMPS_URL}
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        ${FETCHCONTENT_DL_EXTRA_ARGS}
         PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/MUMPS/CMakeLists_mumps.cmake CMakeLists.txt
     )
 
