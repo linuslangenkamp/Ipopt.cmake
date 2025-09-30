@@ -31,7 +31,12 @@ option(USE_PROCESSOR_EXTENSIONS     "Use sse / mmx / avx extensions during compi
 # MUMPS build options
 option(MUMPS_USE_LIBSEQ     "Use the MUMPS sequential MPI stub" ON)
 option(MUMPS_USE_METIS      "Use the Metis library"             ON)
-# TODO: fix or add build with MPI!
+
+# TODO: add OpenMP option
+option(MUMPS_USE_OPENMP     "Use the OpenMP library"            OFF)
+
+# TODO: add MPI option
+option(MUMPS_USE_MPI        "Use the MPI library"               OFF)
 
 set(METIS_LIB_PATH "" CACHE STRING "Path to libmetis (file) or directory containing libmetis")
 set(METIS_INC_PATH "" CACHE PATH   "Path to METIS include directory (contains metis.h)")

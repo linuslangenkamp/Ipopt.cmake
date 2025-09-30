@@ -111,14 +111,25 @@ endif()
 
 if (DOWNLOAD_MUMPS)
     set(MUMPS_VERSION "5.8.1")
+    set(MUMPS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/MUMPS/sources")
     set(MUMPS_URL "https://mumps-solver.org/MUMPS_${MUMPS_VERSION}.tar.gz")
 
-    FetchContent_Declare(
-        Mumps
-        URL ${MUMPS_URL}
-        ${FETCHCONTENT_DL_EXTRA_ARGS}
-        PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/MUMPS/CMakeLists_mumps.cmake CMakeLists.txt
-    )
+    if(EXISTS "${MUMPS_SOURCE_DIR}")
+        message(STATUS "Using local MUMPS ${MUMPS_VERSION} sources at ${MUMPS_SOURCE_DIR}.")
+        FetchContent_Declare(
+            Mumps
+            SOURCE_DIR ${MUMPS_SOURCE_DIR}
+            PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/MUMPS/CMakeLists_mumps.cmake CMakeLists.txt
+        )
+    else()
+        message(STATUS "Downloading MUMPS ${MUMPS_VERSION} sources ...")
+        FetchContent_Declare(
+            Mumps
+            URL ${MUMPS_URL}
+            ${FETCHCONTENT_DL_EXTRA_ARGS}
+            PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/MUMPS/CMakeLists_mumps.cmake CMakeLists.txt
+        )
+    endif()
 
     FetchContent_GetProperties(Mumps)
     if(NOT mumps_POPULATED)
