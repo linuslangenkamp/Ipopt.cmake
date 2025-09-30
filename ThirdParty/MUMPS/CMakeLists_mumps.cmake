@@ -9,7 +9,7 @@ set(MUMPS_LAPACK_LIB_PATH "None" CACHE PATH "The Lapack library library Path")
 
 message(STATUS "Building MUMPS with METIS: ${MUMPS_USE_METIS}")
 
-set(INCLUDEDIR ${CMAKE_BINARY_DIR}/MUMPS/include)
+set(INCLUDEDIR ${CMAKE_CURRENT_BINARY_DIR}/MUMPS/include)
 
 include(GNUInstallDirs)
 
@@ -17,9 +17,9 @@ include(GNUInstallDirs)
 # End of user config part
 #------------------------------------------------------------
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 #------------------------------------------------------------
 # Detect 64 bits

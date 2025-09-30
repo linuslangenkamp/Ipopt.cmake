@@ -42,6 +42,7 @@ endif ()
 include(FetchContent)
 
 set(FETCHCONTENT_DL_EXTRA_ARGS "")
+set(FETCHCONTENT_BASE_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps)
 
 if (CMAKE_VERSION VERSION_GREATER "3.23")
     # Since CMake 3.24, FetchContent supports extra download arguments

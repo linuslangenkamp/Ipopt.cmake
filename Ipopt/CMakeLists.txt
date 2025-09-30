@@ -17,8 +17,8 @@ message(STATUS "F77_FUNC = ${F77_FUNC}")
 message(STATUS "F77_FUNC_ = ${F77_FUNC_}")
 message(STATUS "COIN_LAPACK_FUNC = ${COIN_LAPACK_FUNC}")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in       ${CMAKE_BINARY_DIR}/Ipopt/include/config.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config_ipopt.h.in ${CMAKE_BINARY_DIR}/Ipopt/include/config_ipopt.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in       ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/include/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config_ipopt.h.in ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/include/config_ipopt.h)
 
 #
 # pkg-config file generation
@@ -38,12 +38,12 @@ if (COIN_HAS_BLAS OR COIN_USE_BLAS)
 endif ()
 set(PACKAGE_VERSION "${IPOPT_VERSION}")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ipopt.pc.in ${CMAKE_BINARY_DIR}/Ipopt/ipopt.pc @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ipopt.pc.in ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/ipopt.pc @ONLY)
 
 set(libdir         "${Ipopt_DIR}")
-set(abs_source_dir "${CMAKE_BINARY_DIR}/bin")
+set(abs_source_dir "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
-install(FILES ${CMAKE_BINARY_DIR}/Ipopt/ipopt.pc
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/ipopt.pc
         DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkg-config/)
 
 #
@@ -252,15 +252,6 @@ if (EXISTS ${Ipopt_DIR}/ThirdParty/HSL)
     include_directories(${Ipopt_DIR}/ThirdParty/HSL)
 endif ()
 
-include_directories(${Ipopt_DIR}/src/Algorithm)
-include_directories(${Ipopt_DIR}/src/Algorithm/LinearSolvers)
-include_directories(${Ipopt_DIR}/src/Algorithm/Inexact)
-include_directories(${Ipopt_DIR}/src/contrib/CGPenalty)
-include_directories(${Ipopt_DIR}/src/Interfaces)
-include_directories(${Ipopt_DIR}/src/Common)
-include_directories(${Ipopt_DIR}/src/LinAlg)
-include_directories(${Ipopt_DIR}/src/Apps/AmplSolver)
-include_directories(${Ipopt_DIR}/src/LinAlg/TMatrices)
 
 if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE)
@@ -291,11 +282,26 @@ else ()
     add_library(ipopt STATIC ${IPOPT_SRC_LIST})
     target_link_libraries(ipopt quadmath)
 endif ()
+
+set_target_properties(ipopt PROPERTIES OUTPUT_NAME "ipopt")
+
+target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/Common)
+target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/Interfaces)
+target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/LinAlg)
+target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/Algorithm)
+target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/Algorithm/LinearSolvers)
+target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/Algorithm/Inexact)
+target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/contrib/CGPenalty)
+target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/Apps/AmplSolver)
+target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/LinAlg/TMatrices)
+
+add_library(Ipopt::Ipopt ALIAS ipopt)
+
 if (COMPILE_LTO)
     set_target_properties(ipopt PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
 endif ()
 
-target_include_directories(ipopt BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
+target_include_directories(ipopt BEFORE PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/include)
 
 if (IPOPT_HAS_MUMPS)
     target_link_libraries(ipopt dmumps mumps_common seq pthread)
@@ -372,7 +378,7 @@ if (IPOPT_BUILD_EXAMPLES)
             ${Ipopt_DIR}/examples/ScalableProblems/solve_problem.cpp)
 
     add_executable_mod(solve_problem ${ScalableProblems_SRCS})
-    target_link_libraries(solve_problem ipopt)
+    target_link_libraries(solve_problem Ipopt::Ipopt)
     if (COMPILE_LTO)
         set_target_properties(solve_problem PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
     endif ()
@@ -394,7 +400,7 @@ if (IPOPT_BUILD_EXAMPLES)
         target_link_libraries(solve_problem dl)
     endif ()
     include_directories(${Ipopt_DIR}/examples/ScalableProblems)
-    target_include_directories(solve_problem BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
+    target_include_directories(solve_problem BEFORE PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/include)
 
     add_test(NAME ipopt_example_luksan_LukVlE1
             COMMAND $<TARGET_FILE:solve_problem> LukVlE1 10)
@@ -601,7 +607,7 @@ if (IPOPT_BUILD_EXAMPLES)
             ${Ipopt_DIR}/examples/Cpp_example/MyNLP.cpp)
 
     add_executable_mod(cpp_example ${Cpp_example_SRCS})
-    target_link_libraries(cpp_example ipopt)
+    target_link_libraries(cpp_example Ipopt::Ipopt)
     if (COMPILE_LTO)
         set_target_properties(cpp_example PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
     endif ()
@@ -625,7 +631,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (UNIX)
         target_link_libraries(cpp_example m)
     endif ()
-    target_include_directories(cpp_example BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
+    target_include_directories(cpp_example BEFORE PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/include)
 
     add_test(NAME ipopt_example_cpp_example
             COMMAND $<TARGET_FILE:cpp_example>)
@@ -636,7 +642,7 @@ if (IPOPT_BUILD_EXAMPLES)
     set(hs071_c_SRCS ${Ipopt_DIR}/examples/hs071_c/hs071_c.c)
 
     add_executable_mod(hs071_c ${hs071_c_SRCS})
-    target_link_libraries(hs071_c ipopt)
+    target_link_libraries(hs071_c Ipopt::Ipopt)
     if (COMPILE_LTO)
         set_target_properties(hs071_c PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
     endif ()
@@ -660,7 +666,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (UNIX)
         target_link_libraries(hs071_c m)
     endif ()
-    target_include_directories(hs071_c BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
+    target_include_directories(hs071_c BEFORE PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/include)
 
     add_test(NAME ipopt_example_hs071_c
             COMMAND $<TARGET_FILE:hs071_c>)
@@ -672,7 +678,7 @@ if (IPOPT_BUILD_EXAMPLES)
             ${Ipopt_DIR}/examples/hs071_cpp/hs071_nlp.cpp)
 
     add_executable_mod(hs071_cpp ${hs071_cpp_SRCS})
-    target_link_libraries(hs071_cpp ipopt)
+    target_link_libraries(hs071_cpp Ipopt::Ipopt)
     if (COMPILE_LTO)
         set_target_properties(hs071_cpp PROPERTIES INTERPROCEDURAL_OPTIMIZATION true)
     endif ()
@@ -696,7 +702,7 @@ if (IPOPT_BUILD_EXAMPLES)
     if (UNIX)
         target_link_libraries(hs071_cpp m)
     endif ()
-    target_include_directories(hs071_cpp BEFORE PRIVATE ${CMAKE_BINARY_DIR}/Ipopt/include)
+    target_include_directories(hs071_cpp BEFORE PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/include)
 
     add_test(NAME ipopt_example_hs071_cpp
             COMMAND $<TARGET_FILE:hs071_cpp>)

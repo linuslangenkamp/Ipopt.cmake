@@ -14,7 +14,7 @@ option(IPOPT_HAS_SPRAL                  "Enable SPRAL solver"   OFF)
 option(IPOPT_HAS_MUMPS                  "Enable Mumps solver"   ON)
 option(IPOPT_SINGLE                     "Build with single precision"     OFF)
 option(IPOPT_INT64                      "Build with 64 bit integer type"  OFF)
-option(IPOPT_BUILD_EXAMPLES             "Enable the building of examples" ON)
+option(IPOPT_BUILD_EXAMPLES             "Enable the building of examples" OFF)
 option(IPOPT_HAS_LINEARSOLVERLOADER     "Build the dynamic linear solver loader"  OFF)
 option(IPOPT_ENABLE_PARDISOSOLVERLOADER "Build the dynamic pardiso solver loader" OFF)
 option(IPOPT_ENABLE_INEXACT             "Build the inexact solver" OFF)
@@ -57,9 +57,9 @@ mark_as_advanced(ENABLE_SHARED_LIBRARIES
         USE_PROCESSOR_EXTENSIONS)
 
 # Set paths for binary and library generation inside the build directory:
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -107,7 +107,7 @@ set(PACKAGE_STRING    "Ipopt")
 set(PACKAGE_TARNAME   "ipopt")
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Ipopt install prefix" FORCE)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/install" CACHE PATH "Ipopt install prefix" FORCE)
 endif ()
 
 include(CheckCCompilerFlag)
@@ -172,9 +172,9 @@ if (HAS_MKL)
             set(MKL_DLL_DIR ${MKL_ROOT}/bin/ia32)
         endif ()
 
-        execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin/
-                COMMAND ${CMAKE_COMMAND} -E copy ${MKL_DLL_DIR}/libiomp5md.dll ${CMAKE_BINARY_DIR}/bin/
-                COMMAND ${CMAKE_COMMAND} -E echo "Copying ${MKL_DLL_DIR}/libiomp5md.dll into ${CMAKE_BINARY_DIR}/bin/")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/bin/
+                COMMAND ${CMAKE_COMMAND} -E copy ${MKL_DLL_DIR}/libiomp5md.dll ${CMAKE_CURRENT_BINARY_DIR}/bin/
+                COMMAND ${CMAKE_COMMAND} -E echo "Copying ${MKL_DLL_DIR}/libiomp5md.dll into ${CMAKE_CURRENT_BINARY_DIR}/bin/")
     endif ()
 
     set(COIN_MKL_LIBS "${MKL_LIBRARIES}")
@@ -425,16 +425,16 @@ if (CMAKE_Fortran_COMPILER)
 
     include(FortranCInterface)
 
-    FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/F77Mangle.h
+    FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/F77Mangle.h
             MACRO_NAMESPACE "F77_"
             SYMBOL_NAMESPACE "F77_")
 
-    file(STRINGS ${CMAKE_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL\\(.*,.*\\) +(.*)")
+    file(STRINGS ${CMAKE_CURRENT_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL\\(.*,.*\\) +(.*)")
     string(REGEX MATCH "F77_GLOBAL\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
     set(F77_FUNC         "F77_FUNC(name,NAME) ${CMAKE_MATCH_1}")
     set(COIN_LAPACK_FUNC "COIN_LAPACK_FUNC(name,NAME) ${CMAKE_MATCH_1}")
 
-    file(STRINGS ${CMAKE_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL_\\(.*,.*\\) +(.*)")
+    file(STRINGS ${CMAKE_CURRENT_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL_\\(.*,.*\\) +(.*)")
     string(REGEX MATCH "F77_GLOBAL_\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
     set(F77_FUNC_         "F77_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
     set(COIN_LAPACK_FUNC_ "COIN_LAPACK_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
@@ -546,17 +546,6 @@ endif ()
 include(CPack)
 include(CTest)
 
-###########################
-#                         #
-# Sum-up of configuration #
-#                         #
-###########################
-
-message(STATUS "************************")
-message(STATUS "*                      *")
-message(STATUS "* Configuration sum-up *")
-message(STATUS "*                      *")
-message(STATUS "************************")
 message(STATUS "Installation directory: ${CMAKE_INSTALL_PREFIX}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
