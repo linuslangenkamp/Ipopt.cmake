@@ -268,8 +268,7 @@ target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/Algorithm/Inexact)
 target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/contrib/CGPenalty)
 target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/Apps/AmplSolver)
 target_include_directories(ipopt PUBLIC ${Ipopt_DIR}/src/LinAlg/TMatrices)
-
-target_include_directories(ipopt PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/include)
+target_include_directories(ipopt PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/Ipopt/include)
 
 add_library(Ipopt::Ipopt ALIAS ipopt)
 
