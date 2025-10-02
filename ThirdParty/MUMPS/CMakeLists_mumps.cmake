@@ -618,22 +618,22 @@ add_library(mumps_flags INTERFACE)
 
 if ("${CMAKE_Fortran_COMPILER_ID}" MATCHES "GNU")
     target_compile_options(mumps_flags INTERFACE
+        $<$<COMPILE_LANGUAGE:Fortran>:
         -w
         -fcray-pointer
         -fallow-argument-mismatch
         -fall-intrinsics
-        -finit-local-zero
+        -finit-local-zero>
     )
 
     target_link_libraries(mumps_flags INTERFACE gfortran)
 endif ()
 
-target_compile_options(mumps_flags INTERFACE
-    -fPIC
-    -cpp
-    -DALLOW_NON_INIT
-    -Dintel_
-    -DAdd_
+target_compile_definitions(mumps_flags INTERFACE
+    ALLOW_NON_INIT
+    intel_
+    Add_
+    MUMPS_ARITH=MUMPS_ARITH_d
 )
 
 if (WIN32)
@@ -702,11 +702,6 @@ target_include_directories(dmumps PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libseq)
 # add_library(zmumps STATIC ${MUMPS_Z_SRCS})
 # target_link_libraries(zmumps mumps_common)
 
-#set_property(TARGET libsmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_s")
-set_property(TARGET dmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_d")
-#set_property(TARGET libcmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_c")
-#set_property(TARGET libzmumps PROPERTY COMPILE_FLAGS "-DMUMPS_ARITH=MUMPS_ARITH_z")
-
 add_executable(dsimple_test examples/dsimpletest.F)
 target_link_libraries(dsimple_test dmumps mumps_common ${LINK_LIBS})
 set_target_properties(dsimple_test PROPERTIES LINKER_LANGUAGE Fortran)
@@ -731,16 +726,7 @@ endif ()
 
 install(TARGETS mumps_common)
 
-# install(TARGETS cmumps
-#         DESTINATION ${LIBDIR})
-
 install(TARGETS dmumps PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mumps)
-
-# install(TARGETS smumps
-#         DESTINATION ${LIBDIR})
-# 
-# install(TARGETS zmumps
-#         DESTINATION ${LIBDIR})
 
 if (MUMPS_USE_LIBSEQ)
   install(DIRECTORY libseq/

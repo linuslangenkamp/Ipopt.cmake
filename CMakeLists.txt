@@ -48,6 +48,12 @@ option(ENABLE_SHARED_LIBRARIES  "Build libraries as shared libraries" OFF)
 option(COMPILE_LTO              "Activate the whole program optimization" OFF)  # GCC macOS does not support this
 option(HAS_MKL                  "Use Intel MKL library (requires Intel compiler)" OFF)
 
+if(CMAKE_BUILD_TYPE STREQUAL "")
+    message(WARNING "CMAKE_BUILD_TYPE not defined - Ipopt and MUMPS will be slow.")
+else()
+    message(STATUS "Using build type: ${CMAKE_BUILD_TYPE}")
+endif()
+
 # Set paths of source
 set(Ipopt_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Ipopt/sources/)
 
@@ -348,14 +354,8 @@ endif ()
 #-----------------------------------------------------------------------------
 
 if (UNIX)
-    target_compile_options(std_global_flags INTERFACE
-        -Wno-deprecated
-    )
-
     if (NOT ENABLE_SHARED_LIBRARIES)
-        target_compile_options(std_global_flags INTERFACE
-            -fPIC
-        )
+        target_compile_options(std_global_flags INTERFACE -fPIC)
     endif ()
 endif ()
 
@@ -385,35 +385,23 @@ set(FORTRAN_INTEGER_TYPE int)
 # Detect name mangling convention used between Fortran and C
 #-----------------------------------------------------------------------------
 
-if (CMAKE_Fortran_COMPILER)
-    enable_language(Fortran)
+enable_language(Fortran)
 
-    safe_tmp(_LOCAL_TMP_F_FLAGS CMAKE_Fortran_FLAGS)
-    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-lto")
+include(FortranCInterface)
 
-    include(FortranCInterface)
+FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/F77Mangle.h
+        MACRO_NAMESPACE "F77_"
+        SYMBOL_NAMESPACE "F77_")
 
-    FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/F77Mangle.h
-            MACRO_NAMESPACE "F77_"
-            SYMBOL_NAMESPACE "F77_")
+file(STRINGS ${CMAKE_CURRENT_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL\\(.*,.*\\) +(.*)")
+string(REGEX MATCH "F77_GLOBAL\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
+set(F77_FUNC         "F77_FUNC(name,NAME) ${CMAKE_MATCH_1}")
+set(COIN_LAPACK_FUNC "COIN_LAPACK_FUNC(name,NAME) ${CMAKE_MATCH_1}")
 
-    file(STRINGS ${CMAKE_CURRENT_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL\\(.*,.*\\) +(.*)")
-    string(REGEX MATCH "F77_GLOBAL\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
-    set(F77_FUNC         "F77_FUNC(name,NAME) ${CMAKE_MATCH_1}")
-    set(COIN_LAPACK_FUNC "COIN_LAPACK_FUNC(name,NAME) ${CMAKE_MATCH_1}")
-
-    file(STRINGS ${CMAKE_CURRENT_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL_\\(.*,.*\\) +(.*)")
-    string(REGEX MATCH "F77_GLOBAL_\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
-    set(F77_FUNC_         "F77_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
-    set(COIN_LAPACK_FUNC_ "COIN_LAPACK_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
-    restore_tmp(CMAKE_Fortran_FLAGS _LOCAL_TMP_F_FLAGS)
-else ()
-    set(F77_FUNC          "F77_FUNC(name,NAME)  name##_")
-    set(F77_FUNC_         "F77_FUNC_(name,NAME) name##__")
-    set(COIN_LAPACK_FUNC  "COIN_LAPACK_FUNC(name,NAME)  name##_")
-    set(COIN_LAPACK_FUNC_ "COIN_LAPACK_FUNC_(name,NAME) name##__")
-endif ()
-
+file(STRINGS ${CMAKE_CURRENT_BINARY_DIR}/F77Mangle.h CONTENTS REGEX "F77_GLOBAL_\\(.*,.*\\) +(.*)")
+string(REGEX MATCH "F77_GLOBAL_\\(.*,.*\\) +(.*)" RESULT ${CONTENTS})
+set(F77_FUNC_         "F77_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
+set(COIN_LAPACK_FUNC_ "COIN_LAPACK_FUNC_(name,NAME) ${CMAKE_MATCH_1}")
 
 set(F77_DUMMY_MAIN "" CACHE STRING "Define to dummy 'main' function (if any) required to link to the Fortran libraries.")
 set(FC_DUMMY_MAIN  "" CACHE STRING "Define to dummy 'main' function (if any) required to link to the Fortran libraries.")
@@ -433,24 +421,10 @@ mark_as_advanced(F77_FUNC
 
 if (USE_FAST_CODE)
     target_compile_options(std_global_flags INTERFACE
-        -O3
-        -fomit-frame-pointer
+        $<$<COMPILE_LANGUAGE:CXX>:-O3 -fomit-frame-pointer -ffast-math -fno-math-errno -fno-trapping-math>
+        $<$<COMPILE_LANGUAGE:C>:-O3 -fomit-frame-pointer -ffast-math -fno-math-errno -fno-trapping-math>
+        $<$<COMPILE_LANGUAGE:Fortran>:-O3 -fomit-frame-pointer -ffast-math>
     )
-
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-        target_compile_options(std_global_flags INTERFACE
-            -fno-math-errno
-            -fp-trap=none
-        )
-    endif ()
-
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        target_compile_options(std_global_flags INTERFACE
-            -ffast-math
-            -fno-math-errno
-            -fno-trapping-math
-        )
-    endif ()
 endif ()
 
 add_definitions(-DHAVE_CONFIG_H)
